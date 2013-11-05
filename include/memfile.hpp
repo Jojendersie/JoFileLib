@@ -6,8 +6,8 @@ namespace Jo {
 namespace Files {
 
 	/**************************************************************************//**
-	 * \class	Files::JsonSrawWrapper
-	 * \brief	This class wrapps the strucutred access to Json and Sraw files.
+	 * \class	Files::MemFile
+	 * \brief	Set a default memory to be interpreted as a file.
 	 * \details	
 	 *****************************************************************************/
 	class MemFile: public IFile
@@ -33,7 +33,7 @@ namespace Files {
 		///		estimate the target size this will be performanter.
 		MemFile( uint64_t _iCapacity = 4096 );
 
-		virtual bool Read( uint64_t _iNumBytes, void* _To ) const override;
+		virtual void Read( uint64_t _iNumBytes, void* _To ) const override;
 		virtual void Write( const void* _From, uint64_t _iNumBytes ) override;
 
 		/// \details Seek can even jump to locations > size for random write

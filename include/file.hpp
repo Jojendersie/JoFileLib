@@ -29,7 +29,7 @@ namespace Files {
 			MOVE_BACKWARD
 		};
 
-		virtual bool Read( uint64_t _iNumBytes, void* _To ) const = 0;
+		virtual void Read( uint64_t _iNumBytes, void* _To ) const = 0;
 		virtual void Write( const void* _From, uint64_t _iNumBytes ) = 0;
 		virtual void Seek( uint64_t _iNumBytes, SeekMode _Mode = SeekMode::SET ) const = 0;
 

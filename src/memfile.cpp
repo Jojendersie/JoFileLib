@@ -16,11 +16,11 @@ namespace Files {
 	MemFile::MemFile( uint64_t _iCapacity ) :
 		IFile( 0, true, true )
 	{
-		m_pBuffer = malloc(_iCapacity);
+		m_pBuffer = malloc(size_t(_iCapacity));
 		m_iCapacity = _iCapacity;
 	}
 
-	bool MemFile::Read( uint64_t _iNumBytes, void* _To ) const
+	void MemFile::Read( uint64_t _iNumBytes, void* _To ) const
 	{
 		// Test if read possible
 		if( m_iCursor + _iNumBytes > m_iSize ) {
@@ -29,7 +29,7 @@ namespace Files {
 			throw std::string(acBuf);
 		}
 
-		memcpy( _To, (uint8_t*)m_pBuffer+m_iCursor, _iNumBytes );
+		memcpy( _To, (uint8_t*)m_pBuffer+m_iCursor, size_t(_iNumBytes) );
 		m_iCursor += _iNumBytes;
 	}
 
@@ -42,10 +42,10 @@ namespace Files {
 		{
 			// Increase to 2x or await more writes of the current size.
 			m_iCapacity = std::max( m_iCursor + _iNumBytes * 2, m_iCapacity*2 );
-			m_pBuffer = realloc( m_pBuffer, m_iCapacity );
+			m_pBuffer = realloc( m_pBuffer, size_t(m_iCapacity) );
 		}
 
-		memcpy( (uint8_t*)m_pBuffer + m_iCursor, _From, _iNumBytes );
+		memcpy( (uint8_t*)m_pBuffer + m_iCursor, _From, size_t(_iNumBytes) );
 		m_iCursor += _iNumBytes;
 		// The write could be some where in the middle through seek.
 		m_iSize = std::max( m_iSize, m_iCursor );

@@ -7,7 +7,7 @@
  *			The structured-raw format is convertible to json and back. It is
  *			just faster and smaller due to the fact that it is binary.
  *
- *			Include this header only and add FileSRAW[D/R/S].lib to the linker.
+ *			Include this header only and add JoFile[D/R].lib to the linker.
  * \author	Johannes Jendersie
  * \date	2013/09
  *****************************************************************************/
@@ -24,3 +24,4 @@ namespace Files {
 
 #include "memfile.hpp"
 #include "filewrapper.hpp"
+#include "fileutils.hpp"

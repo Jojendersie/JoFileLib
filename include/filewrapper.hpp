@@ -134,7 +134,7 @@ namespace Files {
 
 			/// \brief Casts the node data into signed byte.
 			/// \details \see{operator float()}
-			operator int8_t() const			{ return *reinterpret_cast<const int8_t*>(&m_iBuffer); }
+			operator int8_t() const				{ return *reinterpret_cast<const int8_t*>(&m_iBuffer); }
 
 			/// \brief Casts the node data into unsigned byte.
 			/// \details \see{operator float()}
@@ -183,7 +183,7 @@ namespace Files {
 			int64_t operator = (int64_t _val);
 			uint64_t operator = (uint64_t _val);
 			bool operator = (bool _val);
-			const std::string& operator = (const std::string _val);
+			const std::string& operator = (const std::string& _val);
 
 			/// \brief Create an subnode with an array of elementary type.
 			/// \param [in] _Name A new which should not be existent in the

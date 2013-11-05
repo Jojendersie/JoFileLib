@@ -97,11 +97,14 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="include\file.hpp" />
+    <ClInclude Include="include\fileutils.hpp" />
     <ClInclude Include="include\filewrapper.hpp" />
     <ClInclude Include="include\jofilelib.hpp" />
     <ClInclude Include="include\memfile.hpp" />
+    <ClInclude Include="include\plattform.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\fileutils_win.cpp" />
     <ClCompile Include="src\filewrapper.cpp" />
     <ClCompile Include="src\memfile.cpp" />
   </ItemGroup>

@@ -171,7 +171,7 @@ namespace Files {
 	{
 		uint64_t iLength = 0;
 		_File.Read( 1<<((int)_Type-(int)JsonSrawWrapper::ElementType::STRING8), &iLength );
-		_Out.resize( iLength );
+		_Out.resize( size_t(iLength) );
 		_File.Read( iLength, &_Out[0] );
 	}
 
@@ -199,7 +199,7 @@ namespace Files {
 		if( m_Type == ElementType::NODE )
 		{
 			// Recursive read (file cursor is at the correct position).
-			m_pChildren = (Node**)malloc( m_iNumElements * sizeof(Node*) );
+			m_pChildren = (Node**)malloc( size_t(m_iNumElements * sizeof(Node*)) );
 			for( uint64_t i=0; i<m_iNumElements; ++i )
 			{
 				Node* pNew = (Node*)m_pFile->m_pNodePool.Alloc();
@@ -210,7 +210,7 @@ namespace Files {
 			if( IsStringType(m_Type) )
 			{
 				// Buffer single string objects
-				m_pBuffer = new std::string[m_iNumElements];
+				m_pBuffer = new std::string[size_t(m_iNumElements)];
 				for( uint64_t i=0; i<m_iNumElements; ++i )
 					ReadString( _File, m_Type, ((std::string*)m_pBuffer)[i] );
 				m_iBuffer = reinterpret_cast<uint64_t>((std::string*)m_pBuffer);
@@ -220,7 +220,7 @@ namespace Files {
 				_File.Read( iDataSize, &m_iBuffer );
 			} else {
 				// Buffer larger memory in one block.
-				m_pBuffer = malloc( iDataSize );
+				m_pBuffer = malloc( size_t(iDataSize) );
 				_File.Read( iDataSize, m_pBuffer );
 			}
 		}
@@ -264,7 +264,7 @@ namespace Files {
 
 		// Not found -> create a new one (stable reaktion and for write access)
 		++m_iNumElements;
-		m_pChildren = (Node**)realloc( m_pChildren, m_iNumElements * sizeof(Node*) );
+		m_pChildren = (Node**)realloc( m_pChildren, size_t(m_iNumElements * sizeof(Node*)) );
 		Node* pNew = (Node*)m_pFile->m_pNodePool.Alloc();
 		m_pChildren[m_iLastAccessed] = new (pNew) Node( m_pFile, _Name );
 		return *pNew;
@@ -374,7 +374,7 @@ namespace Files {
 		return _val;
 	}
 
-	const std::string& JsonSrawWrapper::Node::operator = (const std::string _val)
+	const std::string& JsonSrawWrapper::Node::operator = (const std::string& _val)
 	{
 		if( m_Type == ElementType::UNKNOWN ) {
 			m_Type = ElementType::STRING8;
@@ -397,7 +397,7 @@ namespace Files {
 
 		// Add a new child
 		++m_iNumElements;
-		m_pChildren = (Node**)realloc( m_pChildren, m_iNumElements * sizeof(Node*) );
+		m_pChildren = (Node**)realloc( m_pChildren, size_t(m_iNumElements * sizeof(Node*)) );
 		Node* pNew = (Node*)m_pFile->m_pNodePool.Alloc();
 		m_pChildren[m_iNumElements-1] = new (pNew) Node( m_pFile, _Name );
 
@@ -406,12 +406,12 @@ namespace Files {
 		pNew->m_iNumElements = _iNumElements;
 		if( IsStringType(_Type) )
 		{
-			pNew->m_pBuffer = new std::string[_iNumElements];
+			pNew->m_pBuffer = new std::string[size_t(_iNumElements)];
 			pNew->m_iBuffer = reinterpret_cast<uint64_t>(pNew->m_pBuffer);
 		} else if( _iNumElements > 1 )
 		{
 			uint64_t iDataSize = (_iNumElements * ELEMENT_TYPE_SIZE[(int)_Type] + 7) / 8;
-			pNew->m_pBuffer = malloc( iDataSize );
+			pNew->m_pBuffer = malloc( size_t(iDataSize) );
 		}
 		return *pNew;
 	}
