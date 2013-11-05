@@ -23,6 +23,9 @@ namespace Files {
 			m_iSize( _iSize ), m_iCursor( 0 ), m_bReadAccess( _bRead ), m_bWriteAccess( _bWrite )
 		{}
 	public:
+
+		virtual ~IFile()	{}
+
 		enum struct SeekMode {
 			SET,
 			MOVE_FORWARD,
