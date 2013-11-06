@@ -1,6 +1,7 @@
 #include "jofilelib.hpp"
 #include "file.hpp"
 #include "filewrapper.hpp"
+#include <cctype>
 
 namespace Jo {
 namespace Files {
@@ -59,6 +60,7 @@ namespace Files {
 		// TYPE
 		uint8_t iCode = (GetNumRequiredBytes(m_iNumElements)<<4) | uint8_t(m_Type);
 		_File.Write( &iCode, 1 );
+		// TODO: determine correct string type
 
 		// IDENTIFIER
 		uint8_t iLength = m_Name.length();
@@ -161,8 +163,133 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
+	static char FindFirstNonWhitespace( const IFile& _File )
+	{
+		char charBuffer;
+		_File.Read( 1, &charBuffer );
+		while( std::isspace(charBuffer) ) _File.Read( 1, &charBuffer );
+		return charBuffer;
+	}
+	static std::string ReadJsonIdentifier( const IFile& _file )
+	{
+		std::string identifier("");
+		int index = 0;
+		char previous;
+		do {
+			char charBuffer = 0;
+			do {
+				previous = charBuffer;
+				_file.Read( 1, &charBuffer );
+				identifier += charBuffer;
+			} while( charBuffer != '"' );
+			// Found a ". It could be escaped -> repeat.
+		} while( previous != 0 && previous=='\\' );
+
+		identifier.pop_back();
+		return identifier;
+	}
+	static std::string ReadJsonNumber( const IFile& _file, bool& _isFloat )
+	{
+		// Assume integer numbers
+		_isFloat = false;
+		std::string number("");
+		int index = 0;
+		char charBuffer = 0;
+		do {
+			// Read one character and append
+			_file.Read( 1, &charBuffer );
+			number += charBuffer;
+			// It is a float!
+			if( charBuffer == '.' || charBuffer == 'e') _isFloat = true;
+		} while( charBuffer != ',' );
+
+		number.pop_back();
+		_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+		return number.c_str();
+	}
+
+	static JsonSrawWrapper::ElementType DeduceType( char _char )
+	{
+		switch(_char) {
+			case '{': return JsonSrawWrapper::ElementType::NODE;
+			case '"': return JsonSrawWrapper::ElementType::STRING8;
+			case '[': return JsonSrawWrapper::ElementType::UNKNOWN;
+			case 't': return JsonSrawWrapper::ElementType::BIT;
+			case 'f': return JsonSrawWrapper::ElementType::BIT;
+			case 'n': return JsonSrawWrapper::ElementType::NODE;
+		}
+		return JsonSrawWrapper::ElementType::UNKNOWN;
+	}
+
+	// ********************************************************************* //
 	void JsonSrawWrapper::Node::ParseJson( const IFile& _File )
 	{
+		// First step search opening '{'
+		char charBuffer = FindFirstNonWhitespace(_File);
+		if( charBuffer != '{' ) throw std::string("Syntax error in json file. Expected {");
+		m_Type = ElementType::NODE;
+
+		do {
+			// Now we are inside the root node search the first identifier
+			charBuffer = FindFirstNonWhitespace(_File);
+			if( charBuffer != '"' ) throw std::string("Syntax error in json file. Expected \"");
+			std::string identifier = ReadJsonIdentifier( _File );
+
+			// Now there must be a :
+			charBuffer = FindFirstNonWhitespace(_File);
+			if( charBuffer != ':' ) throw std::string("Syntax error in json file. Expected :");
+
+			// What type has the value?
+			charBuffer = FindFirstNonWhitespace(_File);
+			//ElementType type =  DeduceType( charBuffer );
+			Node& newNode = Add( identifier, ElementType::UNKNOWN, 0 );
+			bool endArray = true;
+			int index = 0;
+			do {
+				switch(charBuffer) {
+				case '{':
+					newNode.m_Type = ElementType::NODE;
+					// Use recursion therfore the object must start with { -> go back
+					_File.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+					newNode.ParseJson( _File );
+					break;
+				case '"':
+					// This is a key - read name
+					newNode[index] = ReadJsonIdentifier( _File );
+					break;
+				case '[':
+					// go into the next turn
+					endArray = false;
+					break;
+				case ',': ++index; break;
+				case ']': endArray = true; break;
+				case 't':
+					_File.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
+					newNode[index] = true;
+					break;
+				case 'f':
+					_File.Seek( 4, IFile::SeekMode::MOVE_FORWARD );
+					newNode[index] = false;
+					break;
+				case 'n':
+					// Skip null reference
+					_File.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
+					break;
+				}
+				if( charBuffer >= '0' && charBuffer <= '9' )
+				{
+					// Parse number
+					_File.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+					bool isFloat;
+					std::string number = ReadJsonNumber( _File, isFloat );
+					if( isFloat ) newNode[index] = atof(number.c_str());
+					else newNode[index] = atoi(number.c_str());
+				}
+				charBuffer = FindFirstNonWhitespace(_File);
+				// TODO: eof check
+			} while(!endArray);
+		} while(charBuffer == ',');
+		if( charBuffer != '}' ) throw std::string("Syntax error in json file. Object must end with }");
 	}
 
 	// ********************************************************************* //
@@ -183,7 +310,7 @@ namespace Files {
 		_File.Read( 1, &iCodeNType );
 		m_Type = (ElementType)(iCodeNType & 0xf);
 
-		// Than the identifier follows as STRING8
+		// Then the identifier follows as STRING8
 		ReadString( _File, ElementType::STRING8, m_Name );
 
 		// Read NELEMS (array dimension)
@@ -313,6 +440,41 @@ namespace Files {
 
 	JsonSrawWrapper::Node& JsonSrawWrapper::Node::operator[]( uint64_t _iIndex )
 	{
+		// Make array larger
+		// TODO: could be faster by the use of capacity (allocate more).
+		if( _iIndex >= m_iNumElements )
+		{
+			uint64_t numOld = m_iNumElements;
+			uint64_t numNew = (_iIndex - m_iNumElements) + 1;
+			m_iNumElements += numNew;
+			switch( m_Type )
+			{
+			case ElementType::NODE: {
+				m_pChildren = (Node**)realloc( m_pChildren, size_t(m_iNumElements * sizeof(Node*)) );
+				for( uint64_t i=numOld; i<m_iNumElements; ++i )
+				{
+					Node* pNew = (Node*)m_pFile->m_pNodePool.Alloc();
+					m_pChildren[i] = new (pNew) Node( m_pFile, "" );
+				}
+				} break;
+			case ElementType::STRING8:
+			case ElementType::STRING16:
+			case ElementType::STRING32:
+			case ElementType::STRING64: {
+				std::string* oldBuffer = reinterpret_cast<std::string*>(m_pBuffer);
+				m_pBuffer = new std::string[size_t(m_iNumElements)];
+				m_iBuffer = reinterpret_cast<uint64_t>(&((std::string*)m_pBuffer)[_iIndex]);
+				for( uint64_t i=0; i<numOld; ++i )
+					reinterpret_cast<std::string*>(m_pBuffer)[i] = std::move(oldBuffer[i]);
+				delete[] oldBuffer;
+				} break;
+			default: {
+				uint64_t iDataSize = (m_iNumElements * ELEMENT_TYPE_SIZE[(int)m_Type] + 7) / 8;
+				m_pBuffer = realloc( m_pBuffer, size_t(iDataSize) );
+				} break;
+			}
+		}
+
 		// Just use the constant variant and cast the result to non const.
 		// This is perfectly valid because we know we are actually not constant.
 		return const_cast<Node&>(const_cast<const Node&>(*this)[_iIndex]);
@@ -321,6 +483,7 @@ namespace Files {
 	// Casts the node data into string.
 	JsonSrawWrapper::Node::operator std::string() const
 	{
+		if( m_iBuffer == 0 ) return std::string("");
 		// Because of array access the m_iBuffer is the start address of
 		// the string in m_pBuffer.
 		return *reinterpret_cast<std::string*>(m_iBuffer);
@@ -392,6 +555,16 @@ namespace Files {
 	// Create an subnode with an array of elementary type.
 	JsonSrawWrapper::Node& JsonSrawWrapper::Node::Add( const std::string& _Name, ElementType _Type, uint64_t _iNumElements )
 	{
+		if( _iNumElements == 0 )
+		{
+			++m_iNumElements;
+			m_pChildren = (Node**)realloc( m_pChildren, size_t(m_iNumElements * sizeof(Node*)) );
+			Node* pNew = (Node*)m_pFile->m_pNodePool.Alloc();
+			m_pChildren[m_iNumElements-1] = new (pNew) Node( m_pFile, _Name );
+			pNew->m_Type = _Type;
+			return *pNew;
+		}
+
 		assert( _Type != ElementType::NODE );
 		assert( _Type != ElementType::UNKNOWN );
 

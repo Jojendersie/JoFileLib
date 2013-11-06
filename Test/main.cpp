@@ -22,6 +22,15 @@ int main()
 		for( int i=0; i<100; ++i )
 			KeyMap[i] = (int16_t)i;
 
+		// Access an empty array and create implicit
+		auto& Cookies = Contr.Add(string("Cookies"), Jo::Files::JsonSrawWrapper::ElementType::INT32, 0 );
+		for( int i=0; i<5; ++i ) Cookies[i] = i;
+		// Test the same for strings
+		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::JsonSrawWrapper::ElementType::STRING8, 0 );
+		Cookies2[0] = std::string("choco");
+		Cookies2[1] = std::string("vanilla");
+
+
 		Jo::Files::MemFile File;
 		Wrap1.Write( File, Jo::Files::Format::SRAW );
 
@@ -39,11 +48,25 @@ int main()
 		for( int i=0; i<100; ++i )
 			std::cout << (int16_t)KeyMap[i] << ' ';
 
+		auto& RCookies = Contr2[string("Cookies")];
+		std::cout << '\n';
+		for( int i=0; i<5; ++i ) std::cout << (int32_t)RCookies[i] << ' ';
+		auto& RCookies2 = Contr2[string("Cookies2")];
+		std::cout << '\n' << (std::string)RCookies2[1] << '\n';
+
 		// Try false access
 		// Without default value this will give 0
 		double d = Wrap2.RootNode[string("Keks")][string("Choclate")];
 
 		float pi = Wrap2.RootNode[string("Pi")].Get(3.14159f);
+
+		// Parse JSON ************************************************
+		// TODO: benchmarl buffering for read...
+		Jo::Files::HDDFile JsonFile( "example.json", true );
+		const Jo::Files::JsonSrawWrapper Wrap3( JsonFile, Jo::Files::Format::JSON );
+		// Test output of some content
+		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
+		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Partner")];
 
 	} catch( std::string e )
 	{

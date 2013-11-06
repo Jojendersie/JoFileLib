@@ -23,5 +23,6 @@ namespace Files {
 };
 
 #include "memfile.hpp"
+#include "hddfile.hpp"
 #include "filewrapper.hpp"
 #include "fileutils.hpp"

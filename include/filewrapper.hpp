@@ -14,8 +14,15 @@ namespace Files {
 
 	/**************************************************************************//**
 	 * \class	Jo::Files::JsonSrawWrapper
-	 * \brief	This class wrapps the strucutred access to Json and Sraw files.
-	 * \details	
+	 * \brief	This class wrapps the structured access to Json and Sraw files.
+	 * \details	To use this wrapper in read mode create it with an opened file and
+	 *			specify the format. TODO: autodetect. In general it can read all
+	 *			sraw and json files, but there is one unsupported json-
+	 *			specification: Arrays [] must have values of the same type. The
+	 *			usual specification allows different types. The type can still be
+	 *			object and each object can contain different values.
+	 *
+	 *			´JsonSrawWrapper Wrapper( someFile, Jo::Files::Format::SRAW )´
 	 *****************************************************************************/
 	class JsonSrawWrapper
 	{
@@ -160,7 +167,8 @@ namespace Files {
 			const Node& operator[]( const std::string& _Name ) const throw(std::string);
 
 			/// \brief Read in a single value/childnode by index.
-			/// \details This method fails at out of bounds.
+			/// \details This method enlarges the array on out of bounds.
+			///		The constant variant will fail.
 			///
 			///		Accessing more than one time the same index will always
 			///		cause a reread - store the value somewhere!
@@ -185,12 +193,12 @@ namespace Files {
 			bool operator = (bool _val);
 			const std::string& operator = (const std::string& _val);
 
-			/// \brief Create an subnode with an array of elementary type.
+			/// \brief Create a subnode with an array of elementary type.
 			/// \param [in] _Name A new which should not be existent in the
 			///		current node (not checked).
 			/// \param [in] _Type The Type of the elementary data. This cannot
-			///		be UNKNOWN or NODE.
-			/// \param [in] _iNumElements 1 or a greater number for the array
+			///		be UNKNOWN or NODE if _iNumElements is != 0.
+			/// \param [in] _iNumElements 0 or a greater number for the array
 			///		dimension.
 			Node& Add( const std::string& _Name, ElementType _Type, uint64_t _iNumElements );
 
