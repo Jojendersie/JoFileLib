@@ -2,6 +2,8 @@
 #include <iostream>
 using namespace std;
 
+void TestPngLoad();
+
 int main()
 {
 	try {
@@ -72,4 +74,6 @@ int main()
 	{
 		std::cout << e;
 	}
+
+	TestPngLoad();
 }

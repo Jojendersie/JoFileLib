@@ -41,12 +41,12 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <TargetExt>.lib</TargetExt>
-    <IncludePath>include;D:\C++\Libraries\JoMemory\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>D:\C++\Libraries\JoFileLib\dependencies\zlib128;include;..\JoMemory\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>D:\C++\Libraries\JoMemory\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.lib</TargetExt>
-    <IncludePath>include;D:\C++\Libraries\JoMemory\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath)</IncludePath>
+    <IncludePath>D:\C++\Libraries\JoFileLib\dependencies\zlib128;include;..\JoMemory\include;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSDK_IncludePath)</IncludePath>
     <LibraryPath>D:\C++\Libraries\JoMemory\bin;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -78,7 +78,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -96,18 +96,69 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="dependencies\libpng166\png.h" />
+    <ClInclude Include="dependencies\libpng166\pngconf.h" />
+    <ClInclude Include="dependencies\libpng166\pngdebug.h" />
+    <ClInclude Include="dependencies\libpng166\pnginfo.h" />
+    <ClInclude Include="dependencies\libpng166\pnglibconf.h" />
+    <ClInclude Include="dependencies\libpng166\pngpriv.h" />
+    <ClInclude Include="dependencies\libpng166\pngstruct.h" />
+    <ClInclude Include="dependencies\zlib128\crc32.h" />
+    <ClInclude Include="dependencies\zlib128\deflate.h" />
+    <ClInclude Include="dependencies\zlib128\gzguts.h" />
+    <ClInclude Include="dependencies\zlib128\inffast.h" />
+    <ClInclude Include="dependencies\zlib128\inffixed.h" />
+    <ClInclude Include="dependencies\zlib128\inflate.h" />
+    <ClInclude Include="dependencies\zlib128\inftrees.h" />
+    <ClInclude Include="dependencies\zlib128\trees.h" />
+    <ClInclude Include="dependencies\zlib128\zconf.h" />
+    <ClInclude Include="dependencies\zlib128\zlib.h" />
+    <ClInclude Include="dependencies\zlib128\zutil.h" />
     <ClInclude Include="include\file.hpp" />
     <ClInclude Include="include\fileutils.hpp" />
     <ClInclude Include="include\filewrapper.hpp" />
     <ClInclude Include="include\hddfile.hpp" />
+    <ClInclude Include="include\imagewrapper.hpp" />
     <ClInclude Include="include\jofilelib.hpp" />
     <ClInclude Include="include\memfile.hpp" />
     <ClInclude Include="include\plattform.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="dependencies\libpng166\png.c" />
+    <ClCompile Include="dependencies\libpng166\pngerror.c" />
+    <ClCompile Include="dependencies\libpng166\pngget.c" />
+    <ClCompile Include="dependencies\libpng166\pngmem.c" />
+    <ClCompile Include="dependencies\libpng166\pngpread.c" />
+    <ClCompile Include="dependencies\libpng166\pngread.c" />
+    <ClCompile Include="dependencies\libpng166\pngrio.c" />
+    <ClCompile Include="dependencies\libpng166\pngrtran.c" />
+    <ClCompile Include="dependencies\libpng166\pngrutil.c" />
+    <ClCompile Include="dependencies\libpng166\pngset.c" />
+    <ClCompile Include="dependencies\libpng166\pngtrans.c" />
+    <ClCompile Include="dependencies\libpng166\pngwio.c" />
+    <ClCompile Include="dependencies\libpng166\pngwrite.c" />
+    <ClCompile Include="dependencies\libpng166\pngwtran.c" />
+    <ClCompile Include="dependencies\libpng166\pngwutil.c" />
+    <ClCompile Include="dependencies\zlib128\adler32.c" />
+    <ClCompile Include="dependencies\zlib128\compress.c" />
+    <ClCompile Include="dependencies\zlib128\crc32.c" />
+    <ClCompile Include="dependencies\zlib128\deflate.c" />
+    <ClCompile Include="dependencies\zlib128\gzclose.c" />
+    <ClCompile Include="dependencies\zlib128\gzlib.c" />
+    <ClCompile Include="dependencies\zlib128\gzread.c" />
+    <ClCompile Include="dependencies\zlib128\gzwrite.c" />
+    <ClCompile Include="dependencies\zlib128\infback.c" />
+    <ClCompile Include="dependencies\zlib128\inffast.c" />
+    <ClCompile Include="dependencies\zlib128\inflate.c" />
+    <ClCompile Include="dependencies\zlib128\inftrees.c" />
+    <ClCompile Include="dependencies\zlib128\trees.c" />
+    <ClCompile Include="dependencies\zlib128\uncompr.c" />
+    <ClCompile Include="dependencies\zlib128\zutil.c" />
     <ClCompile Include="src\fileutils_win.cpp" />
     <ClCompile Include="src\filewrapper.cpp" />
     <ClCompile Include="src\hddfile.cpp" />
+    <ClCompile Include="src\imagewrapper.cpp" />
+    <ClCompile Include="src\imagewrapper_png.cpp" />
     <ClCompile Include="src\memfile.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

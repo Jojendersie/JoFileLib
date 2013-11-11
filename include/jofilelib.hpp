@@ -17,12 +17,15 @@ namespace Jo {
 namespace Files {
 	enum struct Format {
 		JSON,
-		SRAW
+		SRAW,
+		PNG
 	};
 };
 };
 
+#include "file.hpp"
 #include "memfile.hpp"
 #include "hddfile.hpp"
 #include "filewrapper.hpp"
+#include "imagewrapper.hpp"
 #include "fileutils.hpp"

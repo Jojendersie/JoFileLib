@@ -1,9 +1,11 @@
 #include "plattform.hpp"
-#include <Windows.h>
+#include "fileutils.hpp"
 #include <algorithm>
 
 #ifdef JO_WINDOWS
-#include "fileutils.hpp"
+#undef WINAPI_FAMILY
+#define WINAPI_FAMILY WINAPI_FAMILY_DESKTOP_APP
+#include <windows.h>
 
 namespace Jo {
 namespace Files {
