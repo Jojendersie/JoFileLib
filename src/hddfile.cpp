@@ -22,7 +22,7 @@ namespace Files {
 
 		// Determine file size
 		fseek( m_file, 0, SEEK_END );
-		m_iSize = ftell( m_file );
+		m_size = ftell( m_file );
 		fseek( m_file, 0, SEEK_SET );
 	}
 
@@ -33,36 +33,36 @@ namespace Files {
 		fclose( m_file );
 	}
 
-	void HDDFile::Read( uint64_t _iNumBytes, void* _To ) const
+	void HDDFile::Read( uint64_t _numBytes, void* _to ) const
 	{
-		if( !m_bReadAccess ) throw std::string("No read access.");
+		if( !m_readAccess ) throw std::string("No read access.");
 
 		// Just read there cannot be any pending write
-		fread( _To, size_t(_iNumBytes), 1, m_file );
-		m_iCursor += _iNumBytes;
+		fread( _to, size_t(_numBytes), 1, m_file );
+		m_cursor += _numBytes;
 	}
 
-	void HDDFile::Write( const void* _From, uint64_t _iNumBytes )
+	void HDDFile::Write( const void* _from, uint64_t _numBytes )
 	{
-		if( !m_bWriteAccess ) throw std::string("No write access.");
+		if( !m_writeAccess ) throw std::string("No write access.");
 
-		fwrite( _From, size_t(_iNumBytes), 1, m_file );
-		m_iCursor += _iNumBytes;
+		fwrite( _from, size_t(_numBytes), 1, m_file );
+		m_cursor += _numBytes;
 	}
 
-	void HDDFile::Seek( uint64_t _iNumBytes, SeekMode _Mode ) const
+	void HDDFile::Seek( uint64_t _numBytes, SeekMode _mode ) const
 	{
 		// Update the cursor and than set
-		switch(_Mode)
+		switch(_mode)
 		{
-		case SeekMode::SET: m_iCursor = _iNumBytes; break;
-		case SeekMode::MOVE_FORWARD: m_iCursor += _iNumBytes; break;
-		case SeekMode::MOVE_BACKWARD: m_iCursor -= _iNumBytes; break;
+		case SeekMode::SET: m_cursor = _numBytes; break;
+		case SeekMode::MOVE_FORWARD: m_cursor += _numBytes; break;
+		case SeekMode::MOVE_BACKWARD: m_cursor -= _numBytes; break;
 		}
 
 		// Set 64 index on each system
 		fseek( m_file, 0, SEEK_SET );
-		int64_t offset = m_iCursor;
+		int64_t offset = m_cursor;
 		while( offset > 0 )
 		{
 			long stepSize = (long)std::min( offset, (int64_t)std::numeric_limits<long>::max());

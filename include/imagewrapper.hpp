@@ -18,7 +18,7 @@ namespace Files {
 	public:
 		/// \brief Use a wrapped file to read from.
 		/// \details This is only to read images call write to save an image.
-		/// \param _Format [in] How should the input be interpreted.
+		/// \param _format [in] How should the input be interpreted.
 		ImageWrapper( const IFile& _file, Format _format );
 
 		~ImageWrapper();

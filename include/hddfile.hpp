@@ -30,11 +30,11 @@ namespace Files {
 
 		~HDDFile();
 
-		virtual void Read( uint64_t _iNumBytes, void* _To ) const override;
-		virtual void Write( const void* _From, uint64_t _iNumBytes ) override;
+		virtual void Read( uint64_t _numBytes, void* _to ) const override;
+		virtual void Write( const void* _from, uint64_t _numBytes ) override;
 
 		/// \details Seek can only jump within the existing file.
-		virtual void Seek( uint64_t _iNumBytes, SeekMode _Mode = SeekMode::SET ) const override;
+		virtual void Seek( uint64_t _numBytes, SeekMode _mode = SeekMode::SET ) const override;
 	};
 };
 };

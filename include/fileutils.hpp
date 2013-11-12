@@ -15,28 +15,28 @@ namespace Utils {
 			std::string name;
 			uint64_t size;
 		};
-		std::vector<FileDesc>		m_Files;
-		std::vector<std::string>	m_Directories;
+		std::vector<FileDesc>		m_files;
+		std::vector<std::string>	m_directories;
 	public:
 		/// \brief Reads all filenames form the given directory.
 		/// \details All the names are buffered so deletions or creations of
 		///		files during iteration are not recognized.
-		FileEnumerator( const std::string& _Directory );
+		FileEnumerator( const std::string& _directory );
 
 		/// \brief Refreshes the lists of names.
-		/// \param [in] _Directory Name of any directory to reload the list from.
-		void Reset( const std::string& _Directory );
+		/// \param [in] _directory Name of any directory to reload the list from.
+		void Reset( const std::string& _directory );
 
-		int GetNumFiles() const					{ return m_Files.size(); }
-		int GetNumDirectories() const			{ return m_Directories.size(); }
+		int GetNumFiles() const					{ return m_files.size(); }
+		int GetNumDirectories() const			{ return m_directories.size(); }
 
-		uint64_t GetFileSize( int _iIndex ) const					{ return m_Files[_iIndex].size; }
+		uint64_t GetFileSize( int _index ) const					{ return m_files[_index].size; }
 
 		/// \brief Returns the file name without any path.
 		///
-		const std::string& GetFileName( int _iIndex ) const			{ return m_Files[_iIndex].name; }
+		const std::string& GetFileName( int _index ) const			{ return m_files[_index].name; }
 
-		const std::string& GetDirectoryName( int _iIndex ) const	{ return m_Directories[_iIndex]; }
+		const std::string& GetDirectoryName( int _index ) const		{ return m_directories[_index]; }
 
 		/// \brief Returns the name of the directory whichs content is enumerated.
 		///
@@ -44,21 +44,21 @@ namespace Utils {
 	};
 
 	/// \brief Takes an arbitrary file name makes sure that is has a full path.
-	/// \param [in] _Name Arbitrary file name.
-	std::string MakeAbsolute( const std::string& _Name );
+	/// \param [in] _name Arbitrary file name.
+	std::string MakeAbsolute( const std::string& _name );
 
 	/// \brief Extracts the part after the last '.'.
-	/// \param [in] _Name Arbitrary file name.
-	std::string GetExtension( const std::string& _Name );
+	/// \param [in] _name Arbitrary file name.
+	std::string GetExtension( const std::string& _name );
 
 	/// \brief Returns the absolute path of the file but without the
 	///		files name itself.
-	/// \param [in] _Name Arbitrary file name.
-	std::string GetDirectory( const std::string& _Name );
+	/// \param [in] _name Arbitrary file name.
+	std::string GetDirectory( const std::string& _name );
 
 	/// \brief Returns the file name without the directory
-	/// \param [in] _Name Arbitrary file name.
-	std::string GetFileName( const std::string& _Name );
+	/// \param [in] _name Arbitrary file name.
+	std::string GetFileName( const std::string& _name );
 };
 };
 };

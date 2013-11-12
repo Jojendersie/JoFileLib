@@ -16,32 +16,32 @@ namespace Files {
 		/// \brief The whole file in memory.
 		/// \details The buffer can have a different capacity than it is filled
 		///		with real data.
-		void* m_pBuffer;
-		uint64_t m_iCapacity;
+		void* m_buffer;
+		uint64_t m_capacity;
 	public:
 		/// \brief Uses an existing memory for file read access.
-		/// \param [in] _pMemory The memory which should be wrapped. Do not
+		/// \param [in] _memory The memory which should be wrapped. Do not
 		///		delete before this MemFile. The file will access directly to
 		///		the original memory.
-		/// \param [in] _iSize Size of the part which should be wrapped. This
+		/// \param [in] _size Size of the part which should be wrapped. This
 		///		must not necessaryly be the whole memory.
-		MemFile( const void* _pMemory, uint64_t _iSize );
+		MemFile( const void* _memory, uint64_t _size );
 
 		/// \brief Creates a file of size 0 with read and write access.
-		/// \param [in] _iCapacity Initial capacity. The buffer is resized if
+		/// \param [in] _capacity Initial capacity. The buffer is resized if
 		///		necessary. The default value is 4 KB. If you can (over)
 		///		estimate the target size this will be performanter.
-		MemFile( uint64_t _iCapacity = 4096 );
+		MemFile( uint64_t _capacity = 4096 );
 
-		virtual void Read( uint64_t _iNumBytes, void* _To ) const override;
-		virtual void Write( const void* _From, uint64_t _iNumBytes ) override;
+		virtual void Read( uint64_t _numBytes, void* _to ) const override;
+		virtual void Write( const void* _from, uint64_t _numBytes ) override;
 
 		/// \details Seek can even jump to locations > size for random write
 		///		access. Reading at such a location will fail.
-		virtual void Seek( uint64_t _iNumBytes, SeekMode _Mode = SeekMode::SET ) const override;
+		virtual void Seek( uint64_t _numBytes, SeekMode _mode = SeekMode::SET ) const override;
 
-		void* GetBuffer()				{ return m_pBuffer; }
-		const void* GetBuffer() const	{ return m_pBuffer; }
+		void* GetBuffer()				{ return m_buffer; }
+		const void* GetBuffer() const	{ return m_buffer; }
 	};
 };
 };

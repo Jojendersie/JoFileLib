@@ -13,7 +13,7 @@ namespace Files {
 	class IFile;
 
 	/**************************************************************************//**
-	 * \class	Jo::Files::JsonSrawWrapper
+	 * \class	Jo::Files::MetaFileWrapper
 	 * \brief	This class wrapps the structured access to Json and Sraw files.
 	 * \details	To use this wrapper in read mode create it with an opened file and
 	 *			specify the format. TODO: autodetect. In general it can read all
@@ -22,30 +22,30 @@ namespace Files {
 	 *			usual specification allows different types. The type can still be
 	 *			object and each object can contain different values.
 	 *
-	 *			´JsonSrawWrapper Wrapper( someFile, Jo::Files::Format::SRAW )´
+	 *			´MetaFileWrapper Wrapper( someFile, Jo::Files::Format::SRAW )´
 	 *****************************************************************************/
-	class JsonSrawWrapper
+	class MetaFileWrapper
 	{
 		//Format m_Format;
-		//const IFile* m_pFile;
-		Memory::PoolAllocator m_pNodePool;
+		//const IFile* m_file;
+		Memory::PoolAllocator m_nodePool;
 
 	public:
 		/// \brief Use a wrapped file to read from.
-		/// \details Changing the JsonSrawWrapper will not change the input file.
+		/// \details Changing the MetaFileWrapper will not change the input file.
 		///		You have to call ´Write´ to do that.
-		/// \param _Format [in] How should the input be interpreted.
-		JsonSrawWrapper( const IFile& _File, Format _Format );
+		/// \param _format [in] How should the input be interpreted.
+		MetaFileWrapper( const IFile& _file, Format _format );
 
 		/// \brief Create an empty wrapper for writing new files.
 		/// \details After adding all the data into the wrapper use ´Write´ to
 		///		stream the results into a file.
-		JsonSrawWrapper();
+		MetaFileWrapper();
 
 		/// \brief Writes the wrapped data into a file.
-		/// \param _File [in] A file opened with write access.
-		/// \param _Format [in] Format as which the data should be saved.
-		void Write( IFile& _File, Format _Format ) const;
+		/// \param _file [in] A file opened with write access.
+		/// \param _format [in] Format as which the data should be saved.
+		void Write( IFile& _file, Format _format ) const;
 
 		enum struct ElementType
 		{
@@ -70,28 +70,28 @@ namespace Files {
 
 		static const int64_t ELEMENT_TYPE_SIZE[];
 
-		/// \brief Check if _Type is one of the STRINGxx enumeration members.
-		/// \return true if _Type is STRING8, STRING16, STRING32 or STRING64
-		static bool IsStringType( ElementType _Type )	{ return _Type <= ElementType::STRING64 && _Type >= ElementType::STRING8;}
+		/// \brief Check if _type is one of the STRINGxx enumeration members.
+		/// \return true if _type is STRING8, STRING16, STRING32 or STRING64
+		static bool IsStringType( ElementType _type )	{ return _type <= ElementType::STRING64 && _type >= ElementType::STRING8;}
 
 		/// Nodes build a leave oriented tree. Every leave eather contains data or
 		/// a refenence to the file where the data is written.
 		class Node
 		{
-			JsonSrawWrapper* m_pFile;
-			uint64_t m_iNumElements;
-			ElementType m_Type;
+			MetaFileWrapper* m_file;
+			uint64_t m_numElements;
+			ElementType m_type;
 			union {
-				Node** m_pChildren;			
-				//uint64_t m_iDataPosition;		///< Position within the file if not buffered
-				void* m_pBuffer;				///< Array data is buffered in its own memory block
+				Node** m_children;			
+				//uint64_t m_dataPosition;		///< Position within the file if not buffered
+				void* m_bufferArray;			///< Array data is buffered in its own memory block
 			};
-			mutable uint64_t m_iBuffer;			///< Primitive non-array data is buffered in that 8 bytes
-			mutable uint64_t m_iLastAccessed;	///< Array index last used in ´operator[int]´ for optimizations
-			std::string m_Name;					///< Identifier of the node
+			mutable uint64_t m_buffer;			///< Primitive non-array data is buffered in that 8 bytes
+			mutable uint64_t m_lastAccessed;	///< Array index last used in ´operator[int]´ for optimizations
+			std::string m_name;					///< Identifier of the node
 
-			void ParseJson( const IFile& _File );
-			void ReadSraw( const IFile& _File );
+			void ParseJson( const IFile& _file );
+			void ReadSraw( const IFile& _file );
 
 			/// \brief A node which is returned in case of an access to an
 			///		unknown element.
@@ -99,21 +99,21 @@ namespace Files {
 
 			/// \brief Creates an empty node of unknown type.
 			///
-			Node( JsonSrawWrapper* _pWrapper, const std::string& _Name );
+			Node( MetaFileWrapper* _wrapper, const std::string& _name );
 
 			/// \brief Read in a node from file recursively.
-			/// \param [in] _pWrapper The wrapper with the node pool.
+			/// \param [in] _wrapper The wrapper with the node pool.
 			/// \param [in]
-			Node( JsonSrawWrapper* _pWrapper, const IFile& _File, Format _Format );
-			friend class JsonSrawWrapper;
+			Node( MetaFileWrapper* _wrapper, const IFile& _file, Format _format );
+			friend class MetaFileWrapper;
 
 			/// \brief No node assignment.
 			/// \details If added some time: must be deep copy with setting the
 			///		correct wrapper parent...
 			void operator = (const Node&);
 		public:
-			void SaveAsJson( IFile& _File ) const;
-			void SaveAsSraw( IFile& _File ) const;
+			void SaveAsJson( IFile& _file ) const;
+			void SaveAsSraw( IFile& _file ) const;
 
 			/// \brief Recursive destruction. Assumes all children in the NodePool.
 			///
@@ -123,37 +123,37 @@ namespace Files {
 			///
 			Node( const Node& );
 
-			uint64_t GetNumElements() const		{ return m_iNumElements; }
-			std::string GetName() const			{ return m_Name; }
-			ElementType GetType() const			{ return m_Type; }
-			void SetName( const std::string& _Name );
+			uint64_t GetNumElements() const		{ return m_numElements; }
+			std::string GetName() const			{ return m_name; }
+			ElementType GetType() const			{ return m_type; }
+			void SetName( const std::string& _name );
 
 			/// \brief Casts the node data into float.
 			/// \details Casting assumes elementary data nodes. If the current
 			///		node is array data or an intermediate node the cast will
 			///		return garbage! Make sure this is an elementary node before
 			///		casting!
-			operator float() const				{ return *reinterpret_cast<const float*>(&m_iBuffer); }
+			operator float() const				{ return *reinterpret_cast<const float*>(&m_buffer); }
 
 			/// \brief Casts the node data into double.
 			/// \details \see{operator float()}
-			operator double() const				{ return *reinterpret_cast<const double*>(&m_iBuffer); }
+			operator double() const				{ return *reinterpret_cast<const double*>(&m_buffer); }
 
 			/// \brief Casts the node data into signed byte.
 			/// \details \see{operator float()}
-			operator int8_t() const				{ return *reinterpret_cast<const int8_t*>(&m_iBuffer); }
+			operator int8_t() const				{ return *reinterpret_cast<const int8_t*>(&m_buffer); }
 
 			/// \brief Casts the node data into unsigned byte.
 			/// \details \see{operator float()}
-			operator uint8_t() const			{ return *reinterpret_cast<const uint8_t*>(&m_iBuffer); }
+			operator uint8_t() const			{ return *reinterpret_cast<const uint8_t*>(&m_buffer); }
 
-			operator int16_t() const			{ return *reinterpret_cast<const int16_t*>(&m_iBuffer); }
-			operator uint16_t() const			{ return *reinterpret_cast<const uint16_t*>(&m_iBuffer); }
-			operator int32_t() const			{ return *reinterpret_cast<const int32_t*>(&m_iBuffer); }
-			operator uint32_t() const			{ return *reinterpret_cast<const uint32_t*>(&m_iBuffer); }
-			operator int64_t() const			{ return *reinterpret_cast<const int64_t*>(&m_iBuffer); }
-			operator uint64_t() const			{ return m_iBuffer; }
-			operator bool() const				{ return m_iBuffer != 0; }
+			operator int16_t() const			{ return *reinterpret_cast<const int16_t*>(&m_buffer); }
+			operator uint16_t() const			{ return *reinterpret_cast<const uint16_t*>(&m_buffer); }
+			operator int32_t() const			{ return *reinterpret_cast<const int32_t*>(&m_buffer); }
+			operator uint32_t() const			{ return *reinterpret_cast<const uint32_t*>(&m_buffer); }
+			operator int64_t() const			{ return *reinterpret_cast<const int64_t*>(&m_buffer); }
+			operator uint64_t() const			{ return m_buffer; }
+			operator bool() const				{ return m_buffer != 0; }
 
 			/// \brief Casts the node data into string.
 			/// \details \see{operator float()}
@@ -163,8 +163,8 @@ namespace Files {
 
 			/// \brief Read in a single value/childnode by name.
 			/// \details This method fails for data nodes
-			Node& operator[]( const std::string& _Name ) throw(std::string);
-			const Node& operator[]( const std::string& _Name ) const throw(std::string);
+			Node& operator[]( const std::string& _name ) throw(std::string);
+			const Node& operator[]( const std::string& _name ) const throw(std::string);
 
 			/// \brief Read in a single value/childnode by index.
 			/// \details This method enlarges the array on out of bounds.
@@ -172,8 +172,8 @@ namespace Files {
 			///
 			///		Accessing more than one time the same index will always
 			///		cause a reread - store the value somewhere!
-			Node& operator[]( uint64_t _iIndex ) throw(std::string);
-			const Node& operator[]( uint64_t _iIndex ) const throw(std::string);
+			Node& operator[]( uint64_t _index ) throw(std::string);
+			const Node& operator[]( uint64_t _index ) const throw(std::string);
 
 			/// \brief Gives direct read / write access to the buffered data.
 			/// \details This fails if this is a data node (Type==NODE) or a
@@ -194,13 +194,13 @@ namespace Files {
 			const std::string& operator = (const std::string& _val);
 
 			/// \brief Create a subnode with an array of elementary type.
-			/// \param [in] _Name A new which should not be existent in the
+			/// \param [in] _name A new which should not be existent in the
 			///		current node (not checked).
-			/// \param [in] _Type The Type of the elementary data. This cannot
-			///		be UNKNOWN or NODE if _iNumElements is != 0.
-			/// \param [in] _iNumElements 0 or a greater number for the array
+			/// \param [in] _type The Type of the elementary data. This cannot
+			///		be UNKNOWN or NODE if _numElements is != 0.
+			/// \param [in] _numElements 0 or a greater number for the array
 			///		dimension.
-			Node& Add( const std::string& _Name, ElementType _Type, uint64_t _iNumElements );
+			Node& Add( const std::string& _name, ElementType _type, uint64_t _numElements );
 
 			/// \brief Recurisve recomputation of the size occupied in a sraw file.
 			/// \return The new size of this node and all its childs if saved to file.
@@ -208,17 +208,17 @@ namespace Files {
 
 			/// \brief Safer access methods with user defined default values.
 			///
-			float Get( float _Default ) const		{ if(m_Type == ElementType::FLOAT) return *this; return _Default; }
-			double Get( double _Default ) const		{ if(m_Type == ElementType::DOUBLE) return *this; return _Default; }
-			int8_t Get( int8_t _Default ) const		{ if(m_Type == ElementType::INT8) return *this; return _Default; }
-			uint8_t Get( uint8_t _Default ) const	{ if(m_Type == ElementType::UINT8) return *this; return _Default; }
-			int16_t Get( int16_t _Default ) const	{ if(m_Type == ElementType::INT16) return *this; return _Default; }
-			uint16_t Get( uint16_t _Default ) const	{ if(m_Type == ElementType::UINT16) return *this; return _Default; }
-			int32_t Get( int32_t _Default ) const	{ if(m_Type == ElementType::INT32) return *this; return _Default; }
-			uint32_t Get( uint32_t _Default ) const	{ if(m_Type == ElementType::UINT32) return *this; return _Default; }
-			int64_t Get( int64_t _Default ) const	{ if(m_Type == ElementType::INT64) return *this; return _Default; }
-			uint64_t Get( uint64_t _Default ) const	{ if(m_Type == ElementType::UINT64) return *this; return _Default; }
-			bool Get( bool _Default ) const			{ if(m_Type == ElementType::BIT) return *this; return _Default; }
+			float Get( float _default ) const		{ if(m_type == ElementType::FLOAT) return *this; return _default; }
+			double Get( double _default ) const		{ if(m_type == ElementType::DOUBLE) return *this; return _default; }
+			int8_t Get( int8_t _default ) const		{ if(m_type == ElementType::INT8) return *this; return _default; }
+			uint8_t Get( uint8_t _default ) const	{ if(m_type == ElementType::UINT8) return *this; return _default; }
+			int16_t Get( int16_t _default ) const	{ if(m_type == ElementType::INT16) return *this; return _default; }
+			uint16_t Get( uint16_t _default ) const	{ if(m_type == ElementType::UINT16) return *this; return _default; }
+			int32_t Get( int32_t _default ) const	{ if(m_type == ElementType::INT32) return *this; return _default; }
+			uint32_t Get( uint32_t _default ) const	{ if(m_type == ElementType::UINT32) return *this; return _default; }
+			int64_t Get( int64_t _default ) const	{ if(m_type == ElementType::INT64) return *this; return _default; }
+			uint64_t Get( uint64_t _default ) const	{ if(m_type == ElementType::UINT64) return *this; return _default; }
+			bool Get( bool _default ) const			{ if(m_type == ElementType::BIT) return *this; return _default; }
 		};
 
 		Node RootNode;

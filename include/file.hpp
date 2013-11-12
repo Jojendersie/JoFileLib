@@ -14,13 +14,13 @@ namespace Files {
 	class IFile
 	{
 	protected:
-		uint64_t m_iSize;
-		mutable uint64_t m_iCursor;
-		bool m_bWriteAccess;
-		bool m_bReadAccess;
+		uint64_t m_size;
+		mutable uint64_t m_cursor;
+		bool m_writeAccess;
+		bool m_readAccess;
 
-		IFile( uint64_t _iSize, bool _bRead, bool _bWrite ) :
-			m_iSize( _iSize ), m_iCursor( 0 ), m_bReadAccess( _bRead ), m_bWriteAccess( _bWrite )
+		IFile( uint64_t _size, bool _read, bool _write ) :
+			m_size( _size ), m_cursor( 0 ), m_readAccess( _read ), m_writeAccess( _write )
 		{}
 	public:
 
@@ -32,24 +32,24 @@ namespace Files {
 			MOVE_BACKWARD
 		};
 
-		virtual void Read( uint64_t _iNumBytes, void* _To ) const = 0;
-		virtual void Write( const void* _From, uint64_t _iNumBytes ) = 0;
-		virtual void Seek( uint64_t _iNumBytes, SeekMode _Mode = SeekMode::SET ) const = 0;
+		virtual void Read( uint64_t _numBytes, void* _to ) const = 0;
+		virtual void Write( const void* _from, uint64_t _numBytes ) = 0;
+		virtual void Seek( uint64_t _numBytes, SeekMode _mode = SeekMode::SET ) const = 0;
 
 		/// \brief Returns the cursor position within the file.
 		/// \return A cursor position with large file support.
-		uint64_t GetCursor() const		{ return m_iCursor; }
+		uint64_t GetCursor() const		{ return m_cursor; }
 
 		/// \brief Get the actual file size.
 		/// \details A write operation must only update the size after succeeding.
 		/// \return Returns the actual file size.
-		uint64_t GetSize() const		{ return m_iSize; }
+		uint64_t GetSize() const		{ return m_size; }
 
 		/// \brief Was this file opened with write access?
 		/// \return true if things can be written into this file.
-		bool CanWrite()		{ return m_bWriteAccess; }
+		bool CanWrite()		{ return m_writeAccess; }
 
-		bool IsEof()		{ return m_iSize == m_iCursor; }
+		bool IsEof()		{ return m_size == m_cursor; }
 	};
 };
 };

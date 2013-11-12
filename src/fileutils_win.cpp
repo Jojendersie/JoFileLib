@@ -13,43 +13,43 @@ namespace Utils {
 
 	// ********************************************************************* //
 	// Reads all filenames form the given directory.
-	FileEnumerator::FileEnumerator( const std::string& _Directory )
+	FileEnumerator::FileEnumerator( const std::string& _directory )
 	{
-		Reset( _Directory );
+		Reset( _directory );
 	}
 
 	// ********************************************************************* //
 	// Refreshes the lists of names.
-	void FileEnumerator::Reset( const std::string& _Directory )
+	void FileEnumerator::Reset( const std::string& _directory )
 	{
-		HANDLE Handle;
-		WIN32_FIND_DATA Data;
+		HANDLE handle;
+		WIN32_FIND_DATA data;
  
-		char acBuf[512];
-		sprintf(acBuf, "%s\\*", _Directory.c_str());
-		Handle = FindFirstFile(acBuf, &Data);
+		char charBuf[512];
+		sprintf(charBuf, "%s\\*", _directory.c_str());
+		handle = FindFirstFile(charBuf, &data);
 		do {
 			// Skip ".", ".." and empty names
-			if (!( (Data.cFileName[0]=='.')
-					&& ( (Data.cFileName[1]=='.' && Data.cFileName[2]==0)
-					   || Data.cFileName[1]==0 ) ))
-			if( Data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+			if (!( (data.cFileName[0]=='.')
+					&& ( (data.cFileName[1]=='.' && data.cFileName[2]==0)
+					   || data.cFileName[1]==0 ) ))
+			if( data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
 			{
-				m_Directories.push_back( Data.cFileName );
+				m_directories.push_back( data.cFileName );
 			} else {
 				// For real files remember name and size
 				FileDesc tmp;
-				tmp.name = Data.cFileName;
-				tmp.size = uint64_t(Data.nFileSizeHigh) << 32 | Data.nFileSizeLow;
-				m_Files.push_back( tmp );
+				tmp.name = data.cFileName;
+				tmp.size = uint64_t(data.nFileSizeHigh) << 32 | data.nFileSizeLow;
+				m_files.push_back( tmp );
 			}
-		} while( FindNextFile(Handle, &Data) );
+		} while( FindNextFile(handle, &data) );
 
-		FindClose(Handle);
+		FindClose(handle);
 
 		// Sort	alphabetically
-		std::sort( m_Directories.begin(), m_Directories.end() );
-		std::sort( m_Files.begin(), m_Files.end(), [](const FileDesc& a, const FileDesc& b){ return a.name<b.name; } );
+		std::sort( m_directories.begin(), m_directories.end() );
+		std::sort( m_files.begin(), m_files.end(), [](const FileDesc& a, const FileDesc& b){ return a.name<b.name; } );
 	}
 };
 };
