@@ -8,7 +8,7 @@ int main()
 {
 	try {
 		// CREATE ********************************************
-		Jo::Files::JsonSrawWrapper Wrap1;
+		Jo::Files::MetaFileWrapper Wrap1;
 		// Write scalar stuff
 		Wrap1.RootNode[string("Graphic")][string("Width")] = 1024;
 		Wrap1.RootNode[string("Graphic")][string("Height")] = 768;
@@ -20,15 +20,15 @@ int main()
 		Contr[string("InvertY")] = true;
 
 		// Create an array node
-		auto& KeyMap = Contr.Add(string("Keys"), Jo::Files::JsonSrawWrapper::ElementType::INT16, 100 );
+		auto& KeyMap = Contr.Add(string("Keys"), Jo::Files::MetaFileWrapper::ElementType::INT16, 100 );
 		for( int i=0; i<100; ++i )
 			KeyMap[i] = (int16_t)i;
 
 		// Access an empty array and create implicit
-		auto& Cookies = Contr.Add(string("Cookies"), Jo::Files::JsonSrawWrapper::ElementType::INT32, 0 );
+		auto& Cookies = Contr.Add(string("Cookies"), Jo::Files::MetaFileWrapper::ElementType::INT32, 0 );
 		for( int i=0; i<5; ++i ) Cookies[i] = i;
 		// Test the same for strings
-		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::JsonSrawWrapper::ElementType::STRING8, 0 );
+		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::MetaFileWrapper::ElementType::STRING8, 0 );
 		Cookies2[0] = std::string("choco");
 		Cookies2[1] = std::string("vanilla");
 
@@ -38,7 +38,7 @@ int main()
 
 		// READ ************************************************
 		File.Seek( 0 );
-		const Jo::Files::JsonSrawWrapper Wrap2( File, Jo::Files::Format::SRAW );
+		const Jo::Files::MetaFileWrapper Wrap2( File, Jo::Files::Format::SRAW );
 		auto& Gr = Wrap2.RootNode[string("Graphic")];
 		int w = Gr[string("Width")];
 		int h = Gr[string("Height")];
@@ -65,7 +65,7 @@ int main()
 		// Parse JSON ************************************************
 		// TODO: benchmarl buffering for read...
 		Jo::Files::HDDFile JsonFile( "example.json", true );
-		const Jo::Files::JsonSrawWrapper Wrap3( JsonFile, Jo::Files::Format::JSON );
+		const Jo::Files::MetaFileWrapper Wrap3( JsonFile, Jo::Files::Format::JSON );
 		// Test output of some content
 		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
 		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Partner")];

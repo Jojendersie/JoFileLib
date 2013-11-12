@@ -1,6 +1,8 @@
 #include "imagewrapper.hpp"
 #include "jofilelib.hpp"
 
+// TODO: padding (if bitdepth < 8)!
+
 namespace Jo {
 namespace Files {
 
@@ -15,6 +17,17 @@ namespace Files {
 			assert(false);
 			throw std::string("[ImageWrapper::ImageWrapper] Cannot open non-image format.");
 		}
+	}
+
+	ImageWrapper::ImageWrapper( uint32_t _width, uint32_t _height, uint32_t _numChannels, ChannelType _type, int _bitDepth ) :
+		m_width(_width),
+		m_height(_height),
+		m_numChannels(_numChannels),
+		m_bitDepth(_bitDepth),
+		m_channelType(_type)
+	{
+		// Round up in case the last byte is not filled completely.
+		m_buffer = (uint8_t*)malloc( (_width * _height * _numChannels * _bitDepth + 7) / 8 );
 	}
 
 	ImageWrapper::~ImageWrapper()

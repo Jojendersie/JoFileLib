@@ -4,7 +4,7 @@
 #include <string>
 //#include <vector>
 //#include <unordered_map>
-#include <poolallocator.hpp>
+#include "poolallocator.hpp"
 
 namespace Jo {
 namespace Files {
@@ -163,8 +163,9 @@ namespace Files {
 
 			/// \brief Read in a single value/childnode by name.
 			/// \details This method fails for data nodes
-			Node& operator[]( const std::string& _name ) throw(std::string);
-			const Node& operator[]( const std::string& _name ) const throw(std::string);
+			/// \throws std::string
+			Node& operator[]( const std::string& _name );
+			const Node& operator[]( const std::string& _name ) const;
 
 			/// \brief Read in a single value/childnode by index.
 			/// \details This method enlarges the array on out of bounds.
@@ -172,13 +173,15 @@ namespace Files {
 			///
 			///		Accessing more than one time the same index will always
 			///		cause a reread - store the value somewhere!
-			Node& operator[]( uint64_t _index ) throw(std::string);
-			const Node& operator[]( uint64_t _index ) const throw(std::string);
+			/// \throws std::string
+			Node& operator[]( uint64_t _index );
+			const Node& operator[]( uint64_t _index ) const;
 
 			/// \brief Gives direct read / write access to the buffered data.
 			/// \details This fails if this is a data node (Type==NODE) or a
 			///		string node.
-			void* GetData() throw(std::string);
+			/// \throws std::string
+			void* GetData();
 
 			float operator = (float _val);
 			double operator = (double _val);

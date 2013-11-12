@@ -1,0 +1,213 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="zlib">
+      <UniqueIdentifier>{65b76c75-3e2b-45b3-90bc-25347c589648}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="libpng">
+      <UniqueIdentifier>{0dbdf824-def0-4cea-bbb0-235dadfedd1c}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="include\filewrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\jofilelib.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\file.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\memfile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\plattform.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\fileutils.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\hddfile.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\imagewrapper.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\inffast.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\inffixed.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\inflate.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\inftrees.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\trees.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\zconf.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\zlib.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\zutil.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\crc32.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\deflate.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\zlib128\gzguts.h">
+      <Filter>zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pnginfo.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pnglibconf.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pngpriv.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pngstruct.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\png.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pngconf.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+    <ClInclude Include="dependencies\libpng166\pngdebug.h">
+      <Filter>libpng</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\filewrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\memfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\fileutils_win.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\hddfile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imagewrapper_png.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imagewrapper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\gzread.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\gzwrite.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\infback.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\inffast.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\inflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\inftrees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\trees.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\uncompr.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\zutil.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\adler32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\compress.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\crc32.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\deflate.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\gzclose.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\zlib128\gzlib.c">
+      <Filter>zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngmem.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngpread.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngread.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngrio.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngrtran.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngrutil.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngset.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngtrans.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngwio.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngwrite.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngwtran.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngwutil.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\png.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngerror.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+    <ClCompile Include="dependencies\libpng166\pngget.c">
+      <Filter>libpng</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

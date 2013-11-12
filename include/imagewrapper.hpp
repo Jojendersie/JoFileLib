@@ -16,10 +16,29 @@ namespace Files {
 	class ImageWrapper
 	{
 	public:
+		enum struct ChannelType {
+			UINT,	///< Any unsigned int with 1,2,4,8,16 or 32 bit (depends on bitdepth)
+			INT,	///< Any signed int with 8, 16 or 32 bit (depends on bitdepth)
+			FLOAT	///< IEEE754 32bit float
+		};
+
 		/// \brief Use a wrapped file to read from.
 		/// \details This is only to read images call write to save an image.
 		/// \param _format [in] How should the input be interpreted.
 		ImageWrapper( const IFile& _file, Format _format );
+
+		/// \brief Create an empty image. The pixels are uninitialized and have
+		///		an unknown value.
+		/// \param [in] _width Number of pixels in x direction.
+		/// \param [in] _height Number of pixels in y direction.
+		/// \param [in] _numChannels Number of color channels in [1,4].
+		///		(E.g. use 3 for RGB).
+		/// \param [in] _type Type of a color channel. The type restricts the
+		///		_bitDepth. See \ref{ChannelType}. TODO: Doxygentest
+		/// \param [in] _bitDepth Number of bits per channel common is 8 or 16.
+		///		1,2,4 and 32 can also be used but make sure your target
+		///		file-format supports that bitdepth
+		ImageWrapper( uint32_t _width, uint32_t _height, uint32_t _numChannels, ChannelType _type = ChannelType::UINT, int _bitDepth=8 );
 
 		~ImageWrapper();
 
@@ -31,12 +50,6 @@ namespace Files {
 
 		/// \brief Return the number of different channels (e.g. RGB -> 3).
 		uint32_t NumChannels() const	{ return m_numChannels; }
-
-		enum struct ChannelType {
-			UINT,	///< Any unsigned int with 1,2,4,8,16 or 32 bit (depends on bitdepth)
-			INT,	///< Any signed int with 8, 16 or 32 bit (depends on bitdepth)
-			FLOAT	///< IEEE754 32bit float
-		};
 
 		/// \brief Return the type of all channels (they all have the same)
 		ChannelType GetChannelType() const	{ return m_channelType; }
@@ -74,7 +87,7 @@ namespace Files {
 		uint32_t m_numChannels;
 		int m_bitDepth;
 		ChannelType m_channelType;
-		int m_pixelSize;		///< Size of a pixel in bytes (= m_numChannels * m_bitDepth / 8)
+		//int m_pixelSize;		///< Size of a pixel in bytes (= m_numChannels * m_bitDepth / 8)
 
 		void ReadPNG( const IFile& _file );
 		void WritePNG( IFile& _file ) const;
