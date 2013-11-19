@@ -26,7 +26,8 @@ int main()
 
 		// Access an empty array and create implicit
 		auto& Cookies = Contr.Add(string("Cookies"), Jo::Files::MetaFileWrapper::ElementType::INT32, 0 );
-		for( int i=0; i<5; ++i ) Cookies[i] = i;
+		for( int i=0; i<5; ++i )
+			Cookies[i] = i;
 		// Test the same for strings
 		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::MetaFileWrapper::ElementType::STRING8, 0 );
 		Cookies2[0] = std::string("choco");
@@ -35,6 +36,10 @@ int main()
 
 		Jo::Files::MemFile File;
 		Wrap1.Write( File, Jo::Files::Format::SRAW );
+		Jo::Files::HDDFile SaveTestJsonFile( "write_test.json", false );
+		Wrap1.Write( SaveTestJsonFile, Jo::Files::Format::JSON );
+		Jo::Files::HDDFile SaveTestSrawFile( "write_test.sraw", false );
+		Wrap1.Write( SaveTestSrawFile, Jo::Files::Format::SRAW );
 
 		// READ ************************************************
 		File.Seek( 0 );

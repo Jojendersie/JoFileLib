@@ -2,6 +2,7 @@
 #include "file.hpp"
 #include "filewrapper.hpp"
 #include <cctype>
+#include <string>
 
 namespace Jo {
 namespace Files {
@@ -37,8 +38,67 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	void MetaFileWrapper::Node::SaveAsJson( IFile& _file ) const
+	void MetaFileWrapper::Node::SaveAsJson( IFile& _file, int _indent ) const
 	{
+		// Do not save unkown garabage
+		if( m_type == ElementType::UNKNOWN ) return;
+
+		std::string buffer;
+		// Start with indent + identifier
+		if( _indent != 0 || m_name == "" )	// Not for root node or unnamed nodes
+		{
+			buffer = "";
+			for( int i=0; i<_indent; ++i )
+				buffer += ' ';
+			// "Name": 
+			buffer += '\"' + m_name + "\": ";
+			_file.Write( buffer.c_str(), buffer.length() );
+		}
+
+		// Add nodes recursively
+		if( m_type == ElementType::NODE )
+		{
+			// TODO: node arrays?
+			_file.Write( "{\n", 2 );
+			for( uint64_t i=0; i<m_numElements; ++i )
+				(*this)[i].SaveAsJson( _file, _indent+2 );
+			for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
+			_file.Write( "}", 1 );
+		} else {
+			// No comes data
+			// If there is more than one element add array syntax []
+			int subIndent = 0;
+			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 6; }
+			for( uint64_t i=0; i<m_numElements; ++i )
+			{
+				switch( m_type )
+				{
+				case ElementType::BIT:		if((*this)[i]) buffer = "true"; else buffer = "false";	break;
+				case ElementType::DOUBLE:	buffer = std::to_string( double((*this)[i]) );			break;
+				case ElementType::FLOAT:	buffer = std::to_string( float((*this)[i]) );			break;
+				case ElementType::INT8:		buffer = std::to_string( int8_t((*this)[i]) );			break;
+				case ElementType::INT16:	buffer = std::to_string( int16_t((*this)[i]) );			break;
+				case ElementType::INT32:	buffer = std::to_string( int32_t((*this)[i]) );			break;
+				case ElementType::INT64:	buffer = std::to_string( int64_t((*this)[i]) );			break;
+				case ElementType::UINT8:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT16:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT32:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT64:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::STRING8:
+				case ElementType::STRING16:
+				case ElementType::STRING32:
+				case ElementType::STRING64:	buffer = (std::string)((*this)[i]);						break;
+				}
+				for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
+				_file.Write( buffer.c_str(), buffer.length() );
+				if( i+1 < m_numElements ) _file.Write( ",\n", 2 );
+			}
+			if( m_numElements > 1 ) _file.Write( "]", 1 );
+		}
+
+		// All variables are delimeted by ,
+		if( _indent != 0 )	// Not for root node
+			_file.Write( ",\n", 2 );
 	}
 
 	// ********************************************************************* //
@@ -403,15 +463,16 @@ namespace Files {
 	{
 		if( _index >= m_numElements ) throw "Out of bounds in node '" + m_name + "'";
 
+		// In case of nodes there is no casting afterwards which dereferences
+		// the item. The child node must be returned immediately.
+		if( m_type == ElementType::NODE ) return *m_children[_index];
+
 		// Fast buffered element access
 		if( m_lastAccessed == _index ) return *this;
 
 		// Load the primitive data into m_buffer
 		switch( m_type )
 		{
-		case ElementType::NODE:
-			m_lastAccessed = _index;
-			return *m_children[_index];
 		case ElementType::STRING8:
 		case ElementType::STRING16:
 		case ElementType::STRING32:
@@ -445,8 +506,8 @@ namespace Files {
 		if( _index >= m_numElements )
 		{
 			uint64_t numOld = m_numElements;
-			uint64_t numNew = (_index - m_numElements) + 1;
-			m_numElements += numNew;
+			// uint64_t numNew = (_index - m_numElements) + 1;
+			m_numElements = _index + 1;
 			switch( m_type )
 			{
 			case ElementType::NODE: {
@@ -469,8 +530,12 @@ namespace Files {
 				delete[] oldBuffer;
 				} break;
 			default: {
+				uint64_t oldDataSize = (numOld * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
 				uint64_t dataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
-				m_bufferArray = realloc( m_bufferArray, size_t(dataSize) );
+				if( m_numElements > 1 )
+					m_bufferArray = realloc( m_bufferArray, size_t(dataSize) );
+				// If there was one element before copy it to the new location
+				if( numOld == 1 ) memcpy( m_bufferArray, &m_buffer, size_t(oldDataSize) );
 				} break;
 			}
 		}

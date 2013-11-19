@@ -112,7 +112,7 @@ namespace Files {
 			///		correct wrapper parent...
 			void operator = (const Node&);
 		public:
-			void SaveAsJson( IFile& _file ) const;
+			void SaveAsJson( IFile& _file, int _indent=0 ) const;
 			void SaveAsSraw( IFile& _file ) const;
 
 			/// \brief Recursive destruction. Assumes all children in the NodePool.
