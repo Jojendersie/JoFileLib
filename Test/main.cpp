@@ -1,11 +1,27 @@
 #include "../include/jofilelib.hpp"
 #include <iostream>
+
+// CRT's memory leak detection
+#if defined(DEBUG) || defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <stdlib.h>
+#include <crtdbg.h>
+// The report also states the allocation number in {}.
+// To find a memory leak use _CrtSetBreakAlloc(##); at program start.
+// You could also use _CrtDumpMemoryLeaks(); at any location to look
+// when a memory leak appears.
+#endif
+
 using namespace std;
 
 void TestPngLoad();
 
 int main()
 {
+#if defined(DEBUG) || defined(_DEBUG)
+	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
+#endif
+	
 	try {
 		// CREATE ********************************************
 		Jo::Files::MetaFileWrapper Wrap1;

@@ -20,6 +20,13 @@ namespace Files {
 		m_capacity = _capacity;
 	}
 
+	MemFile::~MemFile()
+	{
+		free( m_buffer );
+		m_buffer = nullptr;
+		m_capacity = 0;
+	}
+
 	void MemFile::Read( uint64_t _numBytes, void* _to ) const
 	{
 		// Test if read possible

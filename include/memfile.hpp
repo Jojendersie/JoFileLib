@@ -33,6 +33,8 @@ namespace Files {
 		///		estimate the target size this will be performanter.
 		MemFile( uint64_t _capacity = 4096 );
 
+		~MemFile();
+
 		virtual void Read( uint64_t _numBytes, void* _to ) const override;
 		virtual void Write( const void* _from, uint64_t _numBytes ) override;
 
