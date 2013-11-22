@@ -37,6 +37,14 @@ namespace Files {
 		/// \param _format [in] How should the input be interpreted.
 		MetaFileWrapper( const IFile& _file, Format _format );
 
+		/// \brief Clears the old data and loads content from file.
+		/// \param _file [in] An opened file which is read. This can also be a
+		///		partition of a file where the whole partion must be a valid
+		///		meta file of the specified format. The file is not necessarily
+		///		read to the end.
+		/// \param _format [in] How should the input be interpreted.
+		void Read( const IFile& _file, Format _format );
+
 		/// \brief Create an empty wrapper for writing new files.
 		/// \details After adding all the data into the wrapper use ´Write´ to
 		///		stream the results into a file.
@@ -105,6 +113,7 @@ namespace Files {
 			/// \param [in] _wrapper The wrapper with the node pool.
 			/// \param [in]
 			Node( MetaFileWrapper* _wrapper, const IFile& _file, Format _format );
+			void Read( const IFile& _file, Format _format );
 			friend class MetaFileWrapper;
 
 			/// \brief No node assignment.
@@ -225,6 +234,16 @@ namespace Files {
 		};
 
 		Node RootNode;
+
+		/// \brief Direct access to the root node. See Node::operator[] for
+		///		more details.
+		Node& operator[]( const std::string& _name )				{ return RootNode[_name]; }
+		const Node& operator[]( const std::string& _name ) const	{ return RootNode[_name]; }
+
+		/// \brief Direct access to the root node. See Node::operator[] for
+		///		more details.
+		Node& operator[]( uint64_t _index )							{ return RootNode[_index]; }
+		const Node& operator[]( uint64_t _index ) const				{ return RootNode[_index]; }
 	};
 
 };

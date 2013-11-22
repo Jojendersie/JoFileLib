@@ -21,6 +21,18 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
+	// Clears the old data and loads content from file.
+	void MetaFileWrapper::Read( const IFile& _file, Format _format )
+	{
+		RootNode.~Node();
+		// After the ~Node the following call should do nothing
+		m_nodePool.FreeAll();
+
+		// Load from file
+		RootNode.Read( _file, _format );
+	}
+
+	// ********************************************************************* //
 	// Create an empty wrapper for writing new files.
 	MetaFileWrapper::MetaFileWrapper() :
 		m_nodePool(sizeof(Node)),
@@ -184,6 +196,13 @@ namespace Files {
 		m_lastAccessed( 0 ),
 		m_name("")
 	{
+		Read( _file, _format );
+	}
+
+	// ********************************************************************* //
+	void MetaFileWrapper::Node::Read( const IFile& _file, Format _format )
+	{
+		// TODO: Format auto detection
 		if( _format == Format::JSON ) 
 			ParseJson( _file );
 		else ReadSraw( _file );
@@ -227,7 +246,11 @@ namespace Files {
 	{
 		char charBuffer;
 		_file.Read( 1, &charBuffer );
-		while( std::isspace(charBuffer) ) _file.Read( 1, &charBuffer );
+		while( std::isspace(charBuffer) )
+		{
+			if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
+			_file.Read( 1, &charBuffer );
+		}
 		return charBuffer;
 	}
 	static std::string ReadJsonIdentifier( const IFile& _file )
@@ -239,6 +262,7 @@ namespace Files {
 			char charBuffer = 0;
 			do {
 				previous = charBuffer;
+				if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
 				_file.Read( 1, &charBuffer );
 				identifier += charBuffer;
 			} while( charBuffer != '"' );
@@ -256,12 +280,14 @@ namespace Files {
 		int index = 0;
 		char charBuffer = 0;
 		do {
+			if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
 			// Read one character and append
 			_file.Read( 1, &charBuffer );
 			number += charBuffer;
 			// It is a float!
 			if( charBuffer == '.' || charBuffer == 'e') _isFloat = true;
-		} while( charBuffer != ',' );
+			// Silently accept any delimiting character.
+		} while( charBuffer != ',' && charBuffer != '\n' && charBuffer != '}' );
 
 		number.pop_back();
 		_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );

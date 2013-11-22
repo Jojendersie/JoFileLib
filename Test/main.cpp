@@ -10,12 +10,12 @@ int main()
 		// CREATE ********************************************
 		Jo::Files::MetaFileWrapper Wrap1;
 		// Write scalar stuff
-		Wrap1.RootNode[string("Graphic")][string("Width")] = 1024;
-		Wrap1.RootNode[string("Graphic")][string("Height")] = 768;
-		Wrap1.RootNode[string("Graphic")][string("DeviceName")] = string("Coockie");
+		Wrap1[string("Graphic")][string("Width")] = 1024;
+		Wrap1[string("Graphic")][string("Height")] = 768;
+		Wrap1[string("Graphic")][string("DeviceName")] = string("Coockie");
 
 		// Instead of repeated access cache node reference
-		auto& Contr = Wrap1.RootNode[string("Controlls")];
+		auto& Contr = Wrap1[string("Controlls")];
 		Contr[string("Speed")] = 0.001;
 		Contr[string("InvertY")] = true;
 
@@ -44,11 +44,11 @@ int main()
 		// READ ************************************************
 		File.Seek( 0 );
 		const Jo::Files::MetaFileWrapper Wrap2( File, Jo::Files::Format::SRAW );
-		auto& Gr = Wrap2.RootNode[string("Graphic")];
+		auto& Gr = Wrap2[string("Graphic")];
 		int w = Gr[string("Width")];
 		int h = Gr[string("Height")];
 		std::string DeviceName = Gr[string("DeviceName")];
-		auto& Contr2 = Wrap2.RootNode[string("Controlls")];
+		auto& Contr2 = Wrap2[string("Controlls")];
 		double s = Contr2[string("Speed")];
 		bool bInvert = Contr2[string("InvertY")];
 		auto& KeyMap2 = Contr2[string("Keys")];
@@ -63,17 +63,17 @@ int main()
 
 		// Try false access
 		// Without default value this will give 0
-		double d = Wrap2.RootNode[string("Keks")][string("Choclate")];
+		double d = Wrap2[string("Keks")][string("Choclate")];
 
-		float pi = Wrap2.RootNode[string("Pi")].Get(3.14159f);
+		float pi = Wrap2[string("Pi")].Get(3.14159f);
 
 		// Parse JSON ************************************************
 		// TODO: benchmarl buffering for read...
 		Jo::Files::HDDFile JsonFile( "example.json", true );
 		const Jo::Files::MetaFileWrapper Wrap3( JsonFile, Jo::Files::Format::JSON );
 		// Test output of some content
-		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
-		std::cout << (std::string)Wrap3.RootNode[std::string("Inhaber")][std::string("Partner")];
+		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
+		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Partner")];
 
 	} catch( std::string e )
 	{

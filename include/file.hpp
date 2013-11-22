@@ -47,9 +47,9 @@ namespace Files {
 
 		/// \brief Was this file opened with write access?
 		/// \return true if things can be written into this file.
-		bool CanWrite()		{ return m_writeAccess; }
+		bool CanWrite() const			{ return m_writeAccess; }
 
-		bool IsEof()		{ return m_size == m_cursor; }
+		bool IsEof() const	{ return m_size == m_cursor; }
 	};
 };
 };
