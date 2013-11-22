@@ -57,7 +57,7 @@ namespace Files {
 
 		std::string buffer;
 		// Start with indent + identifier
-		if( _indent != 0 || m_name == "" )	// Not for root node or unnamed nodes
+		if( _indent != 0 && m_name != "" )	// Not for root node or unnamed nodes
 		{
 			buffer = "";
 			for( int i=0; i<_indent; ++i )
@@ -99,7 +99,7 @@ namespace Files {
 				case ElementType::STRING8:
 				case ElementType::STRING16:
 				case ElementType::STRING32:
-				case ElementType::STRING64:	buffer = (std::string)((*this)[i]);						break;
+				case ElementType::STRING64:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
 				}
 				for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
 				_file.Write( buffer.c_str(), buffer.length() );
@@ -245,6 +245,7 @@ namespace Files {
 	static char FindFirstNonWhitespace( const IFile& _file )
 	{
 		char charBuffer;
+		if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
 		_file.Read( 1, &charBuffer );
 		while( std::isspace(charBuffer) )
 		{
@@ -318,6 +319,7 @@ namespace Files {
 		do {
 			// Now we are inside the root node search the first identifier
 			charBuffer = FindFirstNonWhitespace(_file);
+			if( charBuffer == '}' ) break;	// There was one, too much: try to continue with the assumption of the object end.
 			if( charBuffer != '"' ) throw std::string("Syntax error in json file. Expected \"");
 			std::string identifier = ReadJsonIdentifier( _file );
 
