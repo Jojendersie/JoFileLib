@@ -137,6 +137,17 @@ namespace Files {
 			ElementType GetType() const			{ return m_type; }
 			void SetName( const std::string& _name );
 
+			/// \brief Sets type and dimension of the current node.
+			/// \details 
+			///		Resize operations can delete elements. Elements in the
+			///		common range will persist.
+			/// \param [in] _size An arbitrary size including 0 (it should fit in memory).
+			/// \param [in] _type If the current node type is UNKNOWN this must
+			///		be a well defined type. If the node already has a type in
+			///		can be UNKNOWN or the type which was set before.
+			/// \throws std::string
+			void Reset( uint64_t _size, ElementType _type = ElementType::UNKNOWN );
+
 			/// \brief Casts the node data into float.
 			/// \details Casting assumes elementary data nodes. If the current
 			///		node is array data or an intermediate node the cast will

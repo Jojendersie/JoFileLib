@@ -73,7 +73,12 @@ namespace Files {
 			// TODO: node arrays?
 			_file.Write( "{\n", 2 );
 			for( uint64_t i=0; i<m_numElements; ++i )
+			{
 				(*this)[i].SaveAsJson( _file, _indent+2 );
+				// All variables are delimeted by ,
+				if(i+1<m_numElements) _file.Write( ",\n", 2 );
+				else _file.Write( "\n", 1 );
+			}
 			for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
 			_file.Write( "}", 1 );
 		} else {
@@ -109,8 +114,8 @@ namespace Files {
 		}
 
 		// All variables are delimeted by ,
-		if( _indent != 0 )	// Not for root node
-			_file.Write( ",\n", 2 );
+		//if( _indent != 0 )	// Not for root node
+		//	_file.Write( "\n", 1 );
 	}
 
 	// ********************************************************************* //
@@ -343,6 +348,7 @@ namespace Files {
 					break;
 				case '"':
 					// This is a key - read name
+					newNode.m_type = ElementType::STRING8;
 					newNode[index] = ReadJsonIdentifier( _file );
 					break;
 				case '[':
@@ -353,10 +359,12 @@ namespace Files {
 				case ']': endArray = true; break;
 				case 't':
 					_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
+					newNode.m_type = ElementType::BIT;
 					newNode[index] = true;
 					break;
 				case 'f':
 					_file.Seek( 4, IFile::SeekMode::MOVE_FORWARD );
+					newNode.m_type = ElementType::BIT;
 					newNode[index] = false;
 					break;
 				case 'n':
@@ -370,8 +378,14 @@ namespace Files {
 					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
 					bool isFloat;
 					std::string number = ReadJsonNumber( _file, isFloat );
-					if( isFloat ) newNode[index] = atof(number.c_str());
-					else newNode[index] = atoi(number.c_str());
+					if( isFloat ) {
+						newNode.m_type = ElementType::DOUBLE;
+						newNode[index] = atof(number.c_str());
+					}
+					else {
+						newNode.m_type = ElementType::INT32;
+						newNode[index] = atoi(number.c_str());
+					}
 				}
 				charBuffer = FindFirstNonWhitespace(_file);
 				// TODO: eof check
@@ -486,6 +500,59 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
+	void MetaFileWrapper::Node::Reset( uint64_t _size, ElementType _type )
+	{
+		// Check if type is correct and set the type
+		if( m_type == ElementType::UNKNOWN && _type == ElementType::UNKNOWN ) throw std::string("[Node::Reset] Current node has undefined type. Type must be defined by the Reset parameter.");
+		else if( m_type != _type && _type != ElementType::UNKNOWN ) throw std::string("[Node::Reset] Reset cannot change the type of a node.");
+		if( _type != ElementType::UNKNOWN )
+			m_type = _type;
+
+		m_lastAccessed = 0;
+		switch( m_type )
+		{
+		case ElementType::NODE: {
+			// Delete elements which are outside the range
+			for( uint64_t i=_size; i<m_numElements; ++i ) m_file->m_nodePool.Delete( m_children[i] );
+			// Resize
+			m_children = (Node**)realloc( m_children, size_t(_size * sizeof(Node*)) );
+			// If enlarged allocate more children
+			for( uint64_t i=m_numElements; i<_size; ++i )
+			{
+				Node* newNode = (Node*)m_file->m_nodePool.Alloc();
+				m_children[i] = new (newNode) Node( m_file, "" );
+			}
+			} break;
+		case ElementType::STRING8:
+		case ElementType::STRING16:
+		case ElementType::STRING32:
+		case ElementType::STRING64: {
+			std::string* oldBuffer = reinterpret_cast<std::string*>(m_bufferArray);
+			m_bufferArray = new std::string[size_t(_size)];
+			m_buffer = reinterpret_cast<uint64_t>(&((std::string*)m_bufferArray)[m_lastAccessed]);
+			for( uint64_t i=0; i<std::min(m_numElements,_size); ++i )
+				reinterpret_cast<std::string*>(m_bufferArray)[i] = std::move(oldBuffer[i]);
+			delete[] oldBuffer;
+			} break;
+		default: {
+			uint64_t oldDataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
+			uint64_t dataSize = (_size * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
+			if( _size > 1 ) {
+				m_bufferArray = realloc( m_bufferArray, size_t(dataSize) );
+				// If there was one element before copy it to the new location
+				if( m_numElements == 1 ) memcpy( m_bufferArray, &m_buffer, size_t(oldDataSize) );
+			} else {
+				if(m_bufferArray) memcpy( &m_buffer, m_bufferArray, size_t(dataSize) );
+				free(m_bufferArray);
+				m_bufferArray = nullptr;
+			}
+			} break;
+		}
+
+		m_numElements = _size;
+	}
+
+	// ********************************************************************* //
 	// Read in a single value/childnode by index.
 	const MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( uint64_t _index ) const
 	{
@@ -529,44 +596,10 @@ namespace Files {
 
 	MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( uint64_t _index )
 	{
+		if( m_type == ElementType::UNKNOWN ) throw std::string("[Node::operator[]] Index access to an undefined node not allowed!");
 		// Make array larger
 		// TODO: could be faster by the use of capacity (allocate more).
-		if( _index >= m_numElements )
-		{
-			uint64_t numOld = m_numElements;
-			// uint64_t numNew = (_index - m_numElements) + 1;
-			m_numElements = _index + 1;
-			switch( m_type )
-			{
-			case ElementType::NODE: {
-				m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
-				for( uint64_t i=numOld; i<m_numElements; ++i )
-				{
-					Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-					m_children[i] = new (newNode) Node( m_file, "" );
-				}
-				} break;
-			case ElementType::STRING8:
-			case ElementType::STRING16:
-			case ElementType::STRING32:
-			case ElementType::STRING64: {
-				std::string* oldBuffer = reinterpret_cast<std::string*>(m_bufferArray);
-				m_bufferArray = new std::string[size_t(m_numElements)];
-				m_buffer = reinterpret_cast<uint64_t>(&((std::string*)m_bufferArray)[_index]);
-				for( uint64_t i=0; i<numOld; ++i )
-					reinterpret_cast<std::string*>(m_bufferArray)[i] = std::move(oldBuffer[i]);
-				delete[] oldBuffer;
-				} break;
-			default: {
-				uint64_t oldDataSize = (numOld * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
-				uint64_t dataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
-				if( m_numElements > 1 )
-					m_bufferArray = realloc( m_bufferArray, size_t(dataSize) );
-				// If there was one element before copy it to the new location
-				if( numOld == 1 ) memcpy( m_bufferArray, &m_buffer, size_t(oldDataSize) );
-				} break;
-			}
-		}
+		if( _index >= m_numElements ) Reset( _index+1 );
 
 		// Just use the constant variant and cast the result to non const.
 		// This is perfectly valid because we know we are actually not constant.
