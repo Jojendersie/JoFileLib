@@ -24,13 +24,13 @@ namespace Files {
 		///		delete before this MemFile. The file will access directly to
 		///		the original memory.
 		/// \param [in] _size Size of the part which should be wrapped. This
-		///		must not necessaryly be the whole memory.
+		///		must not necessarily be the whole memory.
 		MemFile( const void* _memory, uint64_t _size );
 
 		/// \brief Creates a file of size 0 with read and write access.
 		/// \param [in] _capacity Initial capacity. The buffer is resized if
 		///		necessary. The default value is 4 KB. If you can (over)
-		///		estimate the target size this will be performanter.
+		///		estimate the target size this will have higher performances.
 		MemFile( uint64_t _capacity = 4096 );
 
 		~MemFile();

@@ -38,7 +38,7 @@ namespace Utils {
 
 		const std::string& GetDirectoryName( int _index ) const		{ return m_directories[_index]; }
 
-		/// \brief Returns the name of the directory whichs content is enumerated.
+		/// \brief Returns the name of the directory whose content is enumerated.
 		///
 		const std::string& GetCurrentDirectoryName() const;
 	};

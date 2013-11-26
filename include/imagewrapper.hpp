@@ -10,15 +10,15 @@ namespace Files {
 
 	/**************************************************************************//**
 	 * \class	Jo::Files::ImageWrapper
-	 * \brief	Loads images of various types and provides a unfied access.
+	 * \brief	Loads images of various types and provides an unified access.
 	 * \details	In general color palettes are not supported!
 	 *****************************************************************************/
 	class ImageWrapper
 	{
 	public:
 		enum struct ChannelType {
-			UINT,	///< Any unsigned int with 1,2,4,8,16 or 32 bit (depends on bitdepth)
-			INT,	///< Any signed int with 8, 16 or 32 bit (depends on bitdepth)
+			UINT,	///< Any unsigned int with 1,2,4,8,16 or 32 bit (depends on bit depth)
+			INT,	///< Any signed int with 8, 16 or 32 bit (depends on bit depth)
 			FLOAT	///< IEEE754 32bit float
 		};
 
@@ -37,7 +37,7 @@ namespace Files {
 		///		_bitDepth. See \ref{ChannelType}. TODO: Doxygentest
 		/// \param [in] _bitDepth Number of bits per channel common is 8 or 16.
 		///		1,2,4 and 32 can also be used but make sure your target
-		///		file-format supports that bitdepth
+		///		file-format supports that bit depth
 		ImageWrapper( uint32_t _width, uint32_t _height, uint32_t _numChannels, ChannelType _type = ChannelType::UINT, int _bitDepth=8 );
 
 		~ImageWrapper();
@@ -77,7 +77,7 @@ namespace Files {
 
 		/// \brief Write image to a file of arbitrary type.
 		/// \details This method fails if the target format does not support
-		///		the current channels + bitdepth
+		///		the current channels + bit depth
 		void Write( IFile& _file, Format _format ) const;
 
 	private:
