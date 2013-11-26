@@ -28,10 +28,10 @@ int main()
 		// Write scalar stuff
 		Wrap1[string("Graphic")][string("Width")] = 1024;
 		Wrap1[string("Graphic")][string("Height")] = 768;
-		Wrap1[string("Graphic")][string("DeviceName")] = string("Coockie");
+		Wrap1[string("Graphic")][string("DeviceName")] = string("Cookie");
 
 		// Instead of repeated access cache node reference
-		auto& Contr = Wrap1[string("Controlls")];
+		auto& Contr = Wrap1[string("Controls")];
 		Contr[string("Speed")] = 0.001;
 		Contr[string("InvertY")] = true;
 
@@ -45,7 +45,7 @@ int main()
 		for( int i=0; i<5; ++i )
 			Cookies[i] = i;
 		// Test the same for strings
-		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::MetaFileWrapper::ElementType::STRING8, 0 );
+		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::MetaFileWrapper::ElementType::STRING, 0 );
 		Cookies2[0] = std::string("choco");
 		Cookies2[1] = std::string("vanilla");
 
@@ -59,12 +59,13 @@ int main()
 
 		// READ ************************************************
 		File.Seek( 0 );
-		const Jo::Files::MetaFileWrapper Wrap2( File, Jo::Files::Format::SRAW );
+		const Jo::Files::MetaFileWrapper Wrap2( File );
 		auto& Gr = Wrap2[string("Graphic")];
 		int w = Gr[string("Width")];
 		int h = Gr[string("Height")];
+		assert( w==1024 && h==768 );
 		std::string DeviceName = Gr[string("DeviceName")];
-		auto& Contr2 = Wrap2[string("Controlls")];
+		auto& Contr2 = Wrap2[string("Controls")];
 		double s = Contr2[string("Speed")];
 		bool bInvert = Contr2[string("InvertY")];
 		auto& KeyMap2 = Contr2[string("Keys")];
@@ -79,14 +80,14 @@ int main()
 
 		// Try false access
 		// Without default value this will give 0
-		double d = Wrap2[string("Keks")][string("Choclate")];
+		double d = Wrap2[string("Keks")][string("Chocolate")];
 
 		float pi = Wrap2[string("Pi")].Get(3.14159f);
 
 		// Parse JSON ************************************************
-		// TODO: benchmarl buffering for read...
+		// TODO: benchmark buffering for read...
 		Jo::Files::HDDFile JsonFile( "example.json", true );
-		const Jo::Files::MetaFileWrapper Wrap3( JsonFile, Jo::Files::Format::JSON );
+		const Jo::Files::MetaFileWrapper Wrap3( JsonFile );
 		// Test output of some content
 		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
 		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Partner")];

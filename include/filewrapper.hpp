@@ -14,9 +14,9 @@ namespace Files {
 
 	/**************************************************************************//**
 	 * \class	Jo::Files::MetaFileWrapper
-	 * \brief	This class wrapps the structured access to Json and Sraw files.
+	 * \brief	This class wraps the structured access to Json and Sraw files.
 	 * \details	To use this wrapper in read mode create it with an opened file and
-	 *			specify the format. TODO: autodetect. In general it can read all
+	 *			specify the format. In general it can read all
 	 *			sraw and json files, but there is one unsupported json-
 	 *			specification: Arrays [] must have values of the same type. The
 	 *			usual specification allows different types. The type can still be
@@ -35,15 +35,15 @@ namespace Files {
 		/// \details Changing the MetaFileWrapper will not change the input file.
 		///		You have to call ´Write´ to do that.
 		/// \param _format [in] How should the input be interpreted.
-		MetaFileWrapper( const IFile& _file, Format _format );
+		MetaFileWrapper( const IFile& _file, Format _format = Format::AUTO_DETECT );
 
 		/// \brief Clears the old data and loads content from file.
 		/// \param _file [in] An opened file which is read. This can also be a
-		///		partition of a file where the whole partion must be a valid
+		///		partition of a file where the whole partition must be a valid
 		///		meta file of the specified format. The file is not necessarily
 		///		read to the end.
 		/// \param _format [in] How should the input be interpreted.
-		void Read( const IFile& _file, Format _format );
+		void Read( const IFile& _file, Format _format = Format::AUTO_DETECT );
 
 		/// \brief Create an empty wrapper for writing new files.
 		/// \details After adding all the data into the wrapper use ´Write´ to
@@ -58,18 +58,18 @@ namespace Files {
 		enum struct ElementType
 		{
 			NODE		= 0x0,
-			STRING8		= 0x1,
-			STRING16	= 0x2,
-			STRING32	= 0x3,
-			STRING64	= 0x4,
+			STRING		= 0x1,
+			// STRING16	= 0x2, Reserved for SRAW
+			// STRING32	= 0x3, Reserved for SRAW
+			// STRING64	= 0x4, Reserved for SRAW
 			BIT			= 0x5,
 			INT8		= 0x6,
-			UINT8		= 0x7,
-			INT16		= 0x8,
-			UINT16		= 0x9,
-			INT32		= 0xa,
-			UINT32		= 0xb,
-			INT64		= 0xc,
+			INT16		= 0x7,
+			INT32		= 0x8,
+			INT64		= 0x9,
+			UINT8		= 0xa,
+			UINT16		= 0xb,
+			UINT32		= 0xc,
 			UINT64		= 0xd,
 			FLOAT		= 0xe,
 			DOUBLE		= 0xf,
@@ -78,12 +78,8 @@ namespace Files {
 
 		static const int64_t ELEMENT_TYPE_SIZE[];
 
-		/// \brief Check if _type is one of the STRINGxx enumeration members.
-		/// \return true if _type is STRING8, STRING16, STRING32 or STRING64
-		static bool IsStringType( ElementType _type )	{ return _type <= ElementType::STRING64 && _type >= ElementType::STRING8;}
-
-		/// Nodes build a leave oriented tree. Every leave eather contains data or
-		/// a refenence to the file where the data is written.
+		/// Nodes build a leave oriented tree. Every leave either contains data or
+		/// a reference to the file where the data is written.
 		class Node
 		{
 			MetaFileWrapper* m_file;
@@ -120,6 +116,13 @@ namespace Files {
 			/// \details If added some time: must be deep copy with setting the
 			///		correct wrapper parent...
 			void operator = (const Node&);
+
+			/// \brief Recursive calculation of the size occupied in a sraw file.
+			/// \param [opt] [out] _stringSize Returns the minimum required size to
+			///		store the length of all strings contained in a single string
+			///		node. The parameter is undefined for recursive calls.
+			/// \return The new size of this node and all its children if saved to file.
+			uint64_t GetDataSize( int* _stringSize = nullptr ) const;
 		public:
 			void SaveAsJson( IFile& _file, int _indent=0 ) const;
 			void SaveAsSraw( IFile& _file ) const;
@@ -146,7 +149,7 @@ namespace Files {
 			///		be a well defined type. If the node already has a type in
 			///		can be UNKNOWN or the type which was set before.
 			/// \throws std::string
-			void Reset( uint64_t _size, ElementType _type = ElementType::UNKNOWN );
+			void Resize( uint64_t _size, ElementType _type = ElementType::UNKNOWN );
 
 			/// \brief Casts the node data into float.
 			/// \details Casting assumes elementary data nodes. If the current
@@ -181,13 +184,13 @@ namespace Files {
 			///		The string is not buffered so this will cause a file access.
 			operator std::string() const;
 
-			/// \brief Read in a single value/childnode by name.
+			/// \brief Read in a single value/child node by name.
 			/// \details This method fails for data nodes
 			/// \throws std::string
 			Node& operator[]( const std::string& _name );
 			const Node& operator[]( const std::string& _name ) const;
 
-			/// \brief Read in a single value/childnode by index.
+			/// \brief Read in a single value/child node by index.
 			/// \details This method enlarges the array on out of bounds.
 			///		The constant variant will fail.
 			///
@@ -216,7 +219,7 @@ namespace Files {
 			bool operator = (bool _val);
 			const std::string& operator = (const std::string& _val);
 
-			/// \brief Create a subnode with an array of elementary type.
+			/// \brief Create a sub node with an array of elementary type.
 			/// \param [in] _name A new which should not be existent in the
 			///		current node (not checked).
 			/// \param [in] _type The Type of the elementary data. This cannot
@@ -224,10 +227,6 @@ namespace Files {
 			/// \param [in] _numElements 0 or a greater number for the array
 			///		dimension.
 			Node& Add( const std::string& _name, ElementType _type, uint64_t _numElements );
-
-			/// \brief Recurisve recomputation of the size occupied in a sraw file.
-			/// \return The new size of this node and all its childs if saved to file.
-			uint64_t GetDataSize() const;
 
 			/// \brief Safer access methods with user defined default values.
 			///
@@ -242,6 +241,15 @@ namespace Files {
 			int64_t Get( int64_t _default ) const	{ if(m_type == ElementType::INT64) return *this; return _default; }
 			uint64_t Get( uint64_t _default ) const	{ if(m_type == ElementType::UINT64) return *this; return _default; }
 			bool Get( bool _default ) const			{ if(m_type == ElementType::BIT) return *this; return _default; }
+
+			/// \brief Short to test if this node contains a string(-array)
+			bool IsString() const	{ return m_type == ElementType::STRING; }
+			/// \brief Short to test if this node contains any signed integer(-array)
+			bool IsInt() const	{ return m_type <= ElementType::INT64 && m_type >= ElementType::INT8; }
+			/// \brief Short to test if this node contains any unsigned integer(-array)
+			bool IsUnsignedInt() const	{ return m_type <= ElementType::UINT64 && m_type >= ElementType::UINT8; }
+			/// \brief Short to test if this node contains a float/double(-array)
+			bool IsFloat() const	{ return m_type == ElementType::FLOAT || m_type == ElementType::DOUBLE; }
 		};
 
 		Node RootNode;

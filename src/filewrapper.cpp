@@ -7,246 +7,15 @@
 namespace Jo {
 namespace Files {
 
-	const int64_t MetaFileWrapper::ELEMENT_TYPE_SIZE[] = { -1, 1, 2, 4, 8, 1, 8, 8, 16, 16, 32, 32, 64, 64, 32, 64 };
+	const int64_t MetaFileWrapper::ELEMENT_TYPE_SIZE[] = { -1, -1, -1, -1, -1, 1, 8, 16, 32, 64, 8, 16, 32, 64, 32, 64 };
 	static int NELEM_SIZE(uint8_t _code) { return 1<<((_code & 0x30)>>4); }
 
 	MetaFileWrapper::Node MetaFileWrapper::Node::UndefinedNode( nullptr, std::string() );
 
 	// ********************************************************************* //
-	// Use a wrapped file to read from.
-	MetaFileWrapper::MetaFileWrapper( const IFile& _file, Format _format ) :
-		m_nodePool(sizeof(Node)),
-		RootNode(this, _file, _format)
-	{
-	}
-
+	// Static helper methods												 //
 	// ********************************************************************* //
-	// Clears the old data and loads content from file.
-	void MetaFileWrapper::Read( const IFile& _file, Format _format )
-	{
-		RootNode.~Node();
-		// After the ~Node the following call should do nothing
-		m_nodePool.FreeAll();
 
-		// Load from file
-		RootNode.Read( _file, _format );
-	}
-
-	// ********************************************************************* //
-	// Create an empty wrapper for writing new files.
-	MetaFileWrapper::MetaFileWrapper() :
-		m_nodePool(sizeof(Node)),
-		RootNode(this, "Root")
-	{
-	}
-
-	// ********************************************************************* //
-	// Writes the wrapped data into a file.
-	void MetaFileWrapper::Write( IFile& _file, Format _format ) const
-	{
-		if( _format == Format::JSON ) 
-			RootNode.SaveAsJson( _file );
-		else RootNode.SaveAsSraw( _file );
-	}
-
-	// ********************************************************************* //
-	void MetaFileWrapper::Node::SaveAsJson( IFile& _file, int _indent ) const
-	{
-		// Do not save unkown garabage
-		if( m_type == ElementType::UNKNOWN ) return;
-
-		std::string buffer;
-		// Start with indent + identifier
-		if( _indent != 0 && m_name != "" )	// Not for root node or unnamed nodes
-		{
-			buffer = "";
-			for( int i=0; i<_indent; ++i )
-				buffer += ' ';
-			// "Name": 
-			buffer += '\"' + m_name + "\": ";
-			_file.Write( buffer.c_str(), buffer.length() );
-		}
-
-		// Add nodes recursively
-		if( m_type == ElementType::NODE )
-		{
-			// TODO: node arrays?
-			_file.Write( "{\n", 2 );
-			for( uint64_t i=0; i<m_numElements; ++i )
-			{
-				(*this)[i].SaveAsJson( _file, _indent+2 );
-				// All variables are delimeted by ,
-				if(i+1<m_numElements) _file.Write( ",\n", 2 );
-				else _file.Write( "\n", 1 );
-			}
-			for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
-			_file.Write( "}", 1 );
-		} else {
-			// No comes data
-			// If there is more than one element add array syntax []
-			int subIndent = 0;
-			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 6; }
-			for( uint64_t i=0; i<m_numElements; ++i )
-			{
-				switch( m_type )
-				{
-				case ElementType::BIT:		if((*this)[i]) buffer = "true"; else buffer = "false";	break;
-				case ElementType::DOUBLE:	buffer = std::to_string( double((*this)[i]) );			break;
-				case ElementType::FLOAT:	buffer = std::to_string( float((*this)[i]) );			break;
-				case ElementType::INT8:		buffer = std::to_string( int8_t((*this)[i]) );			break;
-				case ElementType::INT16:	buffer = std::to_string( int16_t((*this)[i]) );			break;
-				case ElementType::INT32:	buffer = std::to_string( int32_t((*this)[i]) );			break;
-				case ElementType::INT64:	buffer = std::to_string( int64_t((*this)[i]) );			break;
-				case ElementType::UINT8:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT16:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT32:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT64:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::STRING8:
-				case ElementType::STRING16:
-				case ElementType::STRING32:
-				case ElementType::STRING64:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
-				}
-				for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
-				_file.Write( buffer.c_str(), buffer.length() );
-				if( i+1 < m_numElements ) _file.Write( ",\n", 2 );
-			}
-			if( m_numElements > 1 ) _file.Write( "]", 1 );
-		}
-
-		// All variables are delimeted by ,
-		//if( _indent != 0 )	// Not for root node
-		//	_file.Write( "\n", 1 );
-	}
-
-	// ********************************************************************* //
-	// Determine the minimum variable size to store the value in _iVal
-	// as a power of two.
-	static int GetNumRequiredBytes( uint64_t _iVal )
-	{
-		if( _iVal > 0xffffffff ) return 3;
-		else if( _iVal > 0xffff ) return 2;
-		else if( _iVal > 0xff ) return 1;
-		else return 0;
-	}
-	// ********************************************************************* //
-	void MetaFileWrapper::Node::SaveAsSraw( IFile& _file ) const
-	{
-		// Do not save unkown garabage
-		if( m_type == ElementType::UNKNOWN ) return;
-
-		// TYPE
-		uint8_t code = (GetNumRequiredBytes(m_numElements)<<4) | uint8_t(m_type);
-		_file.Write( &code, 1 );
-		// TODO: determine correct string type
-
-		// IDENTIFIER
-		uint8_t length = m_name.length();
-		_file.Write( &length, 1 );
-		_file.Write( &m_name[0], length );
-
-		// NELEMS
-		_file.Write( &m_numElements, NELEM_SIZE(code) );
-
-		// [SIZE]
-		uint64_t dataSize = GetDataSize();
-		if( m_type == ElementType::NODE || IsStringType( m_type ) )
-			_file.Write( &dataSize, 8 );
-
-		// data
-		if( m_type == ElementType::NODE )
-		{
-			// Recursive write.
-			for( uint64_t i=0; i<m_numElements; ++i )
-				m_children[i]->SaveAsSraw( _file );
-		} else if( IsStringType(m_type) ) {
-			for( uint64_t i=0; i<m_numElements; ++i )
-			{
-				uint64_t length = ((std::string*)m_bufferArray)[i].length();
-				_file.Write( &length, ELEMENT_TYPE_SIZE[(int)m_type] );
-				_file.Write( ((std::string*)m_bufferArray)[i].data(), length );
-			}
-		} else {
-			if( m_numElements == 1 )
-			{
-				_file.Write( &m_bufferArray, dataSize );
-			} else {
-				_file.Write( m_bufferArray, dataSize );
-			}
-		}
-	}
-
-
-
-
-
-	// ********************************************************************* //
-	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const std::string& _name ) :
-		m_file( _wrapper ),
-		m_numElements( 0 ),
-		m_type( ElementType::UNKNOWN ),
-		m_children( nullptr ),
-		m_buffer( 0 ),
-		m_lastAccessed( 0 ),
-		m_name( _name )
-	{
-	}
-
-	// ********************************************************************* //
-	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const IFile& _file, Format _format ) :
-		m_file( _wrapper ),
-		m_numElements( 0 ),
-		m_type( ElementType::UNKNOWN ),
-		m_children( nullptr ),
-		m_buffer( 0 ),
-		m_lastAccessed( 0 ),
-		m_name("")
-	{
-		Read( _file, _format );
-	}
-
-	// ********************************************************************* //
-	void MetaFileWrapper::Node::Read( const IFile& _file, Format _format )
-	{
-		// TODO: Format auto detection
-		if( _format == Format::JSON ) 
-			ParseJson( _file );
-		else ReadSraw( _file );
-	}
-
-	// ********************************************************************* //
-	MetaFileWrapper::Node::~Node()
-	{
-		if( m_file )	// Only if this is not a flat copy
-		{
-			if( m_type == ElementType::NODE )
-			{
-				for( uint64_t i=0; i<m_numElements; ++i )
-					m_file->m_nodePool.Delete( m_children[i] );
-				free( m_children );
-			} else if( m_bufferArray )
-			{
-				if( IsStringType(m_type) )
-					delete[] (std::string*)m_bufferArray;
-				else
-					free( m_bufferArray );
-			}
-		}
-	}
-
-	// ********************************************************************* //
-	// Flat copy construction. The children are just ignored.
-	MetaFileWrapper::Node::Node( const Node& _Node ) :
-		m_file( nullptr ),		// This show the destructor that the current node is a flat copy
-		m_numElements( _Node.m_numElements ),
-		m_type( _Node.m_type ),
-		m_children( _Node.m_children ),
-		m_buffer( _Node.m_buffer ),
-		m_lastAccessed( _Node.m_lastAccessed ),
-		m_name( _Node.m_name )
-	{
-	}
-
-	// ********************************************************************* //
 	static char FindFirstNonWhitespace( const IFile& _file )
 	{
 		char charBuffer;
@@ -303,14 +72,163 @@ namespace Files {
 	static MetaFileWrapper::ElementType DeduceType( char _char )
 	{
 		switch(_char) {
-			case '{': return MetaFileWrapper::ElementType::NODE;
-			case '"': return MetaFileWrapper::ElementType::STRING8;
-			case '[': return MetaFileWrapper::ElementType::UNKNOWN;
-			case 't': return MetaFileWrapper::ElementType::BIT;
-			case 'f': return MetaFileWrapper::ElementType::BIT;
-			case 'n': return MetaFileWrapper::ElementType::NODE;
+		case '{': return MetaFileWrapper::ElementType::NODE;
+		case '"': return MetaFileWrapper::ElementType::STRING;
+		case '[': return MetaFileWrapper::ElementType::UNKNOWN;
+		case 't': return MetaFileWrapper::ElementType::BIT;
+		case 'f': return MetaFileWrapper::ElementType::BIT;
+		case 'n': return MetaFileWrapper::ElementType::NODE;
 		}
 		return MetaFileWrapper::ElementType::UNKNOWN;
+	}
+
+	// ********************************************************************* //
+	// Determine the minimum variable size to store the value in _iVal
+	// as a power of two.
+	static int GetNumRequiredBytes( uint64_t _iVal )
+	{
+		if( _iVal > 0xffffffff ) return 3;
+		else if( _iVal > 0xffff ) return 2;
+		else if( _iVal > 0xff ) return 1;
+		else return 0;
+	}
+
+	// ********************************************************************* //
+	// Read a string with variable sized length header from file to std::string
+	static void ReadString( const IFile& _file, int _stringSize, std::string& _Out )
+	{
+		uint64_t length = 0;
+		_file.Read( _stringSize, &length );
+		_Out.resize( size_t(length) );
+		_file.Read( length, &_Out[0] );
+	}
+
+	// ********************************************************************* //
+	// MetaFileWrapper														 //
+	// ********************************************************************* //
+
+	// ********************************************************************* //
+	// Use a wrapped file to read from.
+	MetaFileWrapper::MetaFileWrapper( const IFile& _file, Format _format ) :
+		m_nodePool(sizeof(Node)),
+		RootNode(this, _file, _format)
+	{
+	}
+
+	// ********************************************************************* //
+	// Clears the old data and loads content from file.
+	void MetaFileWrapper::Read( const IFile& _file, Format _format )
+	{
+		RootNode.~Node();
+		// After the ~Node the following call should do nothing
+		m_nodePool.FreeAll();
+
+		// Load from file
+		RootNode.Read( _file, _format );
+	}
+
+	// ********************************************************************* //
+	// Create an empty wrapper for writing new files.
+	MetaFileWrapper::MetaFileWrapper() :
+		m_nodePool(sizeof(Node)),
+		RootNode(this, "Root")
+	{
+	}
+
+	// ********************************************************************* //
+	// Writes the wrapped data into a file.
+	void MetaFileWrapper::Write( IFile& _file, Format _format ) const
+	{
+		if( _format == Format::JSON ) 
+			RootNode.SaveAsJson( _file );
+		else RootNode.SaveAsSraw( _file );
+	}
+
+
+
+	// ********************************************************************* //
+	// MetaFileWrapper::Node												 //
+	// ********************************************************************* //
+
+	// ********************************************************************* //
+	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const std::string& _name ) :
+		m_file( _wrapper ),
+		m_numElements( 0 ),
+		m_type( ElementType::UNKNOWN ),
+		m_children( nullptr ),
+		m_buffer( 0 ),
+		m_lastAccessed( 0 ),
+		m_name( _name )
+	{
+	}
+
+	// ********************************************************************* //
+	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const IFile& _file, Format _format ) :
+		m_file( _wrapper ),
+		m_numElements( 0 ),
+		m_type( ElementType::UNKNOWN ),
+		m_children( nullptr ),
+		m_buffer( 0 ),
+		m_lastAccessed( 0 ),
+		m_name("")
+	{
+		Read( _file, _format );
+	}
+
+	// ********************************************************************* //
+	MetaFileWrapper::Node::~Node()
+	{
+		if( m_file )	// Only if this is not a flat copy
+		{
+			if( m_type == ElementType::NODE )
+			{
+				for( uint64_t i=0; i<m_numElements; ++i )
+					m_file->m_nodePool.Delete( m_children[i] );
+				free( m_children );
+			} else if( m_bufferArray )
+			{
+				if( m_type == ElementType::STRING )
+					delete[] (std::string*)m_bufferArray;
+				else
+					free( m_bufferArray );
+			}
+		}
+	}
+
+	// ********************************************************************* //
+	// Flat copy construction. The children are just ignored.
+	MetaFileWrapper::Node::Node( const Node& _Node ) :
+		m_file( nullptr ),		// This show the destructor that the current node is a flat copy
+		m_numElements( _Node.m_numElements ),
+		m_type( _Node.m_type ),
+		m_children( _Node.m_children ),
+		m_buffer( _Node.m_buffer ),
+		m_lastAccessed( _Node.m_lastAccessed ),
+		m_name( _Node.m_name )
+	{
+	}
+
+	// ********************************************************************* //
+	void MetaFileWrapper::Node::Read( const IFile& _file, Format _format )
+	{
+		// Read in the first few bytes to test which format it is.
+		// In json files either {" or {} are valid (expanded with white spaces).
+		// if these two symbols can be found the format is assumed to be json.
+		if( _format == Format::AUTO_DETECT )
+		{
+			_format = Format::SRAW;	// Default if nothing else can be detected
+			char charBuffer = FindFirstNonWhitespace(_file);
+			if( charBuffer == '{' ) {
+				charBuffer = FindFirstNonWhitespace(_file);
+				if( charBuffer == '}' || charBuffer == '"' )
+					_format = Format::JSON;
+			}
+			// Let the parser see everything
+			_file.Seek( 0 );
+		}
+		if( _format == Format::JSON ) 
+			ParseJson( _file );
+		else ReadSraw( _file );
 	}
 
 	// ********************************************************************* //
@@ -342,13 +260,13 @@ namespace Files {
 				switch(charBuffer) {
 				case '{':
 					newNode.m_type = ElementType::NODE;
-					// Use recursion therfore the object must start with { -> go back
+					// Use recursion therefore the object must start with { -> go back
 					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
 					newNode.ParseJson( _file );
 					break;
 				case '"':
 					// This is a key - read name
-					newNode.m_type = ElementType::STRING8;
+					newNode.m_type = ElementType::STRING;
 					newNode[index] = ReadJsonIdentifier( _file );
 					break;
 				case '[':
@@ -395,16 +313,6 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	// Read a string with variable sized length header from file to std::string
-	static void ReadString( const IFile& _file, MetaFileWrapper::ElementType _type, std::string& _Out )
-	{
-		uint64_t length = 0;
-		_file.Read( 1<<((int)_type-(int)MetaFileWrapper::ElementType::STRING8), &length );
-		_Out.resize( size_t(length) );
-		_file.Read( length, &_Out[0] );
-	}
-
-	// ********************************************************************* //
 	void MetaFileWrapper::Node::ReadSraw( const IFile& _file )
 	{
 		// The first byte has CODE ELEM_TYPE nibbles
@@ -412,15 +320,20 @@ namespace Files {
 		_file.Read( 1, &codeNType );
 		m_type = (ElementType)(codeNType & 0xf);
 
+		// Map all STRINGxx types to STRING but remember the size for ReadString.
+		// The number is useless for non string types
+		int stringSize = 1<<((int)m_type-(int)MetaFileWrapper::ElementType::STRING);
+		if( (int)m_type <= 0x4 && m_type > ElementType::STRING ) m_type = ElementType::STRING;
+
 		// Then the identifier follows as STRING8
-		ReadString( _file, ElementType::STRING8, m_name );
+		ReadString( _file, 1, m_name );
 
 		// Read NELEMS (array dimension)
 		_file.Read( NELEM_SIZE(codeNType), &m_numElements );
 
 		// Read or calculate the data block size
 		uint64_t dataSize;
-		if( m_type == ElementType::NODE || IsStringType(m_type) )
+		if( m_type == ElementType::NODE || m_type == ElementType::STRING )
 			_file.Read( 8, &dataSize );
 		else
 			dataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
@@ -436,12 +349,12 @@ namespace Files {
 			}
 		} else {
 			// Now the files cursor is at the beginning of the data
-			if( IsStringType(m_type) )
+			if( m_type == ElementType::STRING )
 			{
 				// Buffer single string objects
 				m_bufferArray = new std::string[size_t(m_numElements)];
 				for( uint64_t i=0; i<m_numElements; ++i )
-					ReadString( _file, m_type, ((std::string*)m_bufferArray)[i] );
+					ReadString( _file, stringSize, ((std::string*)m_bufferArray)[i] );
 				m_buffer = reinterpret_cast<uint64_t>((std::string*)m_bufferArray);
 			} else if( m_numElements == 1 )
 			{
@@ -455,13 +368,134 @@ namespace Files {
 		}
 	}
 
+
+	// ********************************************************************* //
+	void MetaFileWrapper::Node::SaveAsJson( IFile& _file, int _indent ) const
+	{
+		// Do not save unknown garbage
+		if( m_type == ElementType::UNKNOWN ) return;
+
+		std::string buffer;
+		// Start with indent + identifier
+		if( _indent != 0 && m_name != "" )	// Not for root node or unnamed nodes
+		{
+			buffer = "";
+			for( int i=0; i<_indent; ++i )
+				buffer += ' ';
+			// "Name": 
+			buffer += '\"' + m_name + "\": ";
+			_file.Write( buffer.c_str(), buffer.length() );
+		}
+
+		// Add nodes recursively
+		if( m_type == ElementType::NODE )
+		{
+			// TODO: node arrays?
+			_file.Write( "{\n", 2 );
+			for( uint64_t i=0; i<m_numElements; ++i )
+			{
+				(*this)[i].SaveAsJson( _file, _indent+2 );
+				// All variables are delimited by ,
+				if(i+1<m_numElements) _file.Write( ",\n", 2 );
+				else _file.Write( "\n", 1 );
+			}
+			for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
+			_file.Write( "}", 1 );
+		} else {
+			// No comes data
+			// If there is more than one element add array syntax []
+			int subIndent = 0;
+			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 6; }
+			for( uint64_t i=0; i<m_numElements; ++i )
+			{
+				switch( m_type )
+				{
+				case ElementType::BIT:		if((*this)[i]) buffer = "true"; else buffer = "false";	break;
+				case ElementType::DOUBLE:	buffer = std::to_string( double((*this)[i]) );			break;
+				case ElementType::FLOAT:	buffer = std::to_string( float((*this)[i]) );			break;
+				case ElementType::INT8:		buffer = std::to_string( int8_t((*this)[i]) );			break;
+				case ElementType::INT16:	buffer = std::to_string( int16_t((*this)[i]) );			break;
+				case ElementType::INT32:	buffer = std::to_string( int32_t((*this)[i]) );			break;
+				case ElementType::INT64:	buffer = std::to_string( int64_t((*this)[i]) );			break;
+				case ElementType::UINT8:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT16:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT32:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT64:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::STRING:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
+				}
+				for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
+				_file.Write( buffer.c_str(), buffer.length() );
+				if( i+1 < m_numElements ) _file.Write( ",\n", 2 );
+			}
+			if( m_numElements > 1 ) _file.Write( "]", 1 );
+		}
+	}
+
+	// ********************************************************************* //
+	void MetaFileWrapper::Node::SaveAsSraw( IFile& _file ) const
+	{
+		// Do not save unknown garbage
+		if( m_type == ElementType::UNKNOWN ) return;
+
+		// Determine correct string type
+		ElementType _storeType = m_type;
+		int _stringSize;
+		if( m_type == ElementType::STRING )
+		{
+			GetDataSize( &_stringSize );
+			if( _stringSize == 2 ) _storeType = ElementType((int)_storeType+1);
+			else if( _stringSize == 4 ) _storeType = ElementType((int)_storeType+2);
+			else if( _stringSize == 8 ) _storeType = ElementType((int)_storeType+3);
+		}
+
+		// TYPE
+		uint8_t code = (GetNumRequiredBytes(m_numElements)<<4) | uint8_t(_storeType);
+		_file.Write( &code, 1 );
+
+		// IDENTIFIER
+		uint8_t length = m_name.length();
+		_file.Write( &length, 1 );
+		_file.Write( &m_name[0], length );
+
+		// NELEMS
+		_file.Write( &m_numElements, NELEM_SIZE(code) );
+
+		// [SIZE]
+		uint64_t dataSize = GetDataSize();
+		if( m_type == ElementType::NODE || m_type == ElementType::STRING )
+			_file.Write( &dataSize, 8 );
+
+		// data
+		if( m_type == ElementType::NODE )
+		{
+			// Recursive write.
+			for( uint64_t i=0; i<m_numElements; ++i )
+				m_children[i]->SaveAsSraw( _file );
+		} else if( m_type == ElementType::STRING ) {
+			for( uint64_t i=0; i<m_numElements; ++i )
+			{
+				uint64_t length = ((std::string*)m_bufferArray)[i].length();
+				_file.Write( &length, _stringSize );
+				_file.Write( ((std::string*)m_bufferArray)[i].data(), length );
+			}
+		} else {
+			if( m_numElements == 1 )
+			{
+				_file.Write( &m_buffer, dataSize );
+			} else {
+				_file.Write( m_bufferArray, dataSize );
+			}
+		}
+	}
+
+
 	// ********************************************************************* //
 	const MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( const std::string& _name ) const
 	{
-		if( m_type == ElementType::UNKNOWN ) return UndefinedNode; //throw "Invalid access to a node of unkown type: '" + m_name + "'.";
+		if( m_type == ElementType::UNKNOWN ) return UndefinedNode; //throw "Invalid access to a node of unknown type: '" + m_name + "'.";
 		if( m_type != ElementType::NODE ) throw "Node '" + m_name + "' is of an elementary type and has no named children.";
 		
-		// Linear search for the correct child (assumes only a few childs
+		// Linear search for the correct child (assumes only a few children
 		// and requires array access -> no hash map)
 		unsigned int m_lastAccessed = 0;
 		while( m_lastAccessed < m_numElements )
@@ -481,7 +515,7 @@ namespace Files {
 		if( m_type == ElementType::UNKNOWN ) m_type = ElementType::NODE;
 		if( m_type != ElementType::NODE ) throw "Node '" + m_name + "' is of an elementary type and has no named children.";
 		
-		// Linear search for the correct child (assumes only a few childs
+		// Linear search for the correct child (assumes only a few children
 		// and requires array access -> no hash map)
 		unsigned int m_lastAccessed = 0;
 		while( m_lastAccessed < m_numElements )
@@ -491,7 +525,7 @@ namespace Files {
 			++m_lastAccessed;
 		}
 
-		// Not found -> create a new one (stable reaktion and for write access)
+		// Not found -> create a new one (stable reaction and for write access)
 		++m_numElements;
 		m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
 		Node* newNode = (Node*)m_file->m_nodePool.Alloc();
@@ -500,7 +534,7 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	void MetaFileWrapper::Node::Reset( uint64_t _size, ElementType _type )
+	void MetaFileWrapper::Node::Resize( uint64_t _size, ElementType _type )
 	{
 		// Check if type is correct and set the type
 		if( m_type == ElementType::UNKNOWN && _type == ElementType::UNKNOWN ) throw std::string("[Node::Reset] Current node has undefined type. Type must be defined by the Reset parameter.");
@@ -523,13 +557,10 @@ namespace Files {
 				m_children[i] = new (newNode) Node( m_file, "" );
 			}
 			} break;
-		case ElementType::STRING8:
-		case ElementType::STRING16:
-		case ElementType::STRING32:
-		case ElementType::STRING64: {
+		case ElementType::STRING: {
 			std::string* oldBuffer = reinterpret_cast<std::string*>(m_bufferArray);
 			m_bufferArray = new std::string[size_t(_size)];
-			m_buffer = reinterpret_cast<uint64_t>(&((std::string*)m_bufferArray)[m_lastAccessed]);
+			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
 			for( uint64_t i=0; i<std::min(m_numElements,_size); ++i )
 				reinterpret_cast<std::string*>(m_bufferArray)[i] = std::move(oldBuffer[i]);
 			delete[] oldBuffer;
@@ -542,6 +573,7 @@ namespace Files {
 				// If there was one element before copy it to the new location
 				if( m_numElements == 1 ) memcpy( m_bufferArray, &m_buffer, size_t(oldDataSize) );
 			} else {
+				// Make first element unbuffered (_size is 1 or 0)
 				if(m_bufferArray) memcpy( &m_buffer, m_bufferArray, size_t(dataSize) );
 				free(m_bufferArray);
 				m_bufferArray = nullptr;
@@ -553,7 +585,7 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	// Read in a single value/childnode by index.
+	// Read in a single value/child node by index.
 	const MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( uint64_t _index ) const
 	{
 		if( _index >= m_numElements ) throw "Out of bounds in node '" + m_name + "'";
@@ -568,10 +600,7 @@ namespace Files {
 		// Load the primitive data into m_buffer
 		switch( m_type )
 		{
-		case ElementType::STRING8:
-		case ElementType::STRING16:
-		case ElementType::STRING32:
-		case ElementType::STRING64:
+		case ElementType::STRING:
 			// Find start address in buffer and store it in m_buffer
 			m_buffer = reinterpret_cast<uint64_t>(&((std::string*)m_bufferArray)[_index]);
 			break;
@@ -599,7 +628,7 @@ namespace Files {
 		if( m_type == ElementType::UNKNOWN ) throw std::string("[Node::operator[]] Index access to an undefined node not allowed!");
 		// Make array larger
 		// TODO: could be faster by the use of capacity (allocate more).
-		if( _index >= m_numElements ) Reset( _index+1 );
+		if( _index >= m_numElements ) Resize( _index+1 );
 
 		// Just use the constant variant and cast the result to non const.
 		// This is perfectly valid because we know we are actually not constant.
@@ -618,7 +647,7 @@ namespace Files {
 	void* MetaFileWrapper::Node::GetData()
 	{
 		if( m_type == ElementType::NODE ) throw "Cannot access data from intermediate node '" + m_name + "'";
-		if( IsStringType(m_type) ) throw "Cannot access data from string node '" + m_name + "'";
+		if( m_type == ElementType::STRING ) throw "Cannot access data from string node '" + m_name + "'";
 
 		if( m_numElements == 1 )
 			return &m_buffer;
@@ -666,33 +695,23 @@ namespace Files {
 	const std::string& MetaFileWrapper::Node::operator = (const std::string& _val)
 	{
 		if( m_type == ElementType::UNKNOWN ) {
-			m_type = ElementType::STRING8;
+			m_type = ElementType::STRING;
 			m_numElements = 1;
 			m_bufferArray = new std::string[1];
 			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
 		}
-		if( !IsStringType(m_type) ) throw "Cannot assign std::string to '" + m_name + "'";
+		if( m_type != ElementType::STRING ) throw "Cannot assign std::string to '" + m_name + "'";
 
 		*reinterpret_cast<std::string*>(m_buffer) = _val;
 		return _val;
 	}
 
 	// ********************************************************************* //
-	// Create an subnode with an array of elementary type.
+	// Create a sub node with an array of elementary type.
 	MetaFileWrapper::Node& MetaFileWrapper::Node::Add( const std::string& _name, ElementType _type, uint64_t _numElements )
 	{
-		if( _numElements == 0 )
-		{
-			++m_numElements;
-			m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
-			Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-			m_children[m_numElements-1] = new (newNode) Node( m_file, _name );
-			newNode->m_type = _type;
-			return *newNode;
-		}
-
-		assert( _type != ElementType::NODE );
-		assert( _type != ElementType::UNKNOWN );
+		assert( _type != ElementType::NODE || _numElements == 0 );
+		assert( _type != ElementType::UNKNOWN || _numElements == 0 );
 
 		// Add a new child
 		++m_numElements;
@@ -703,7 +722,7 @@ namespace Files {
 		// Set array type and data
 		newNode->m_type = _type;
 		newNode->m_numElements = _numElements;
-		if( IsStringType(_type) )
+		if( _type == ElementType::STRING )
 		{
 			newNode->m_bufferArray = new std::string[size_t(_numElements)];
 			newNode->m_buffer = reinterpret_cast<uint64_t>(newNode->m_bufferArray);
@@ -716,8 +735,8 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	// Recurisve recomputation of m_iDataSize.
-	uint64_t MetaFileWrapper::Node::GetDataSize() const
+	// Recursive calculation of the size occupied in a sraw file.
+	uint64_t MetaFileWrapper::Node::GetDataSize( int* _stringSize ) const
 	{
 		if( m_type == ElementType::NODE )
 		{
@@ -725,7 +744,7 @@ namespace Files {
 			for( uint64_t i=0; i<m_numElements; ++i )
 				dataSize += m_children[i]->GetDataSize();
 			return dataSize;
-		} else if( IsStringType( ElementType::NODE ) ) {
+		} else if( m_type == ElementType::STRING ) {
 			// Go through all strings and determine the correct string type and
 			// total data amount
 			uint64_t lengthSum = 0, maxLength = 0;
@@ -735,13 +754,11 @@ namespace Files {
 				maxLength = std::max( maxLength, length );
 				lengthSum += length;
 			}
-			// The ugly const casts bring lots of efficience - GetDataSize is the
-			// only point where all strings must be iterated and during everything
-			// else except saving the string type is irrelevant.
-			if( maxLength > 0xffffffff ) { const_cast<Node*>(this)->m_type = ElementType::STRING64; return m_numElements*8 + lengthSum; }
-			else if( maxLength > 0xffff ) { const_cast<Node*>(this)->m_type = ElementType::STRING32; return m_numElements*4 + lengthSum;	}
-			else if( maxLength > 0xff ) { const_cast<Node*>(this)->m_type = ElementType::STRING16; return m_numElements*2 + lengthSum; }
-			else { const_cast<Node*>(this)->m_type = ElementType::STRING8; return m_numElements + lengthSum; }
+			// Set number of required bytes to store the length if required 
+			// and return the size of all length counters + string data
+			int numBytes = 1<<GetNumRequiredBytes(maxLength);
+			if(_stringSize) *_stringSize = numBytes;
+			return m_numElements * numBytes + lengthSum;
 		} else {
 			return (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
 		}

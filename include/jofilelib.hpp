@@ -16,6 +16,7 @@
 namespace Jo {
 namespace Files {
 	enum struct Format {
+		AUTO_DETECT,
 		JSON,
 		SRAW,
 		PNG
