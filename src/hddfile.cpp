@@ -1,4 +1,5 @@
 #include "hddfile.hpp"
+#include "fileutils.hpp"
 #include <algorithm>
 
 namespace Jo {
@@ -7,10 +8,23 @@ namespace Files {
 	HDDFile::HDDFile( const std::string& _name, bool _readOnly, int _bufferSize ) :
 		IFile(0, _readOnly, !_readOnly), m_pendingWriteBytes(0)
 	{
-		if( _readOnly ) {
-			m_file = fopen( _name.c_str(), "rb" );
-		} else {
-			m_file = fopen( _name.c_str(), "wb" );
+		const char* modeStr = "wb";
+		if( _readOnly ) modeStr = "rb";
+
+		m_file = fopen( _name.c_str(), modeStr );
+
+		// In write mode it could be that the directory is missing
+		if(!m_file && !_readOnly)
+		{
+			// Search for the directory
+			std::string dir = Utils::GetDirectory(_name);
+			if( !Utils::Exists(_name) )
+			{
+				// Create missing directory
+				Utils::MakeDir(dir);
+				// Retry
+				m_file = fopen( _name.c_str(), modeStr );
+			}
 		}
 
 		if(!m_file) throw "Failed to open file '" + _name + "'";

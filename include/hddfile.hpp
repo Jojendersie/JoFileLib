@@ -19,7 +19,16 @@ namespace Files {
 		FILE* m_file;
 		int m_pendingWriteBytes;
 	public:
+		/// \brief Determine how a file should be opened.
+		/// \details The mode flags can be used in any combination.
+		/*enum struct ModeFlags {
+			READ,
+			WRITE
+		};*/
+
 		/// \brief Open a file on hard disk.
+		/// \details If the file/directory does not exist it will be created if
+		///		opened in write mode.
 		/// \param [in] _name Name and path to a file on disk.
 		/// \param [in] _readOnly Try to open file in read mode. This will fail
 		///		with an exception if the file does not exists. To open a file

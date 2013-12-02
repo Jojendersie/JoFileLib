@@ -209,5 +209,8 @@
     <ClCompile Include="dependencies\libpng166\pngget.c">
       <Filter>libpng</Filter>
     </ClCompile>
+    <ClCompile Include="src\fileutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

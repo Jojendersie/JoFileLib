@@ -94,7 +94,9 @@ namespace Files {
 			mutable uint64_t m_lastAccessed;	///< Array index last used in ´operator[int]´ for optimizations
 			std::string m_name;					///< Identifier of the node
 
-			void ParseJson( const IFile& _file );
+			void ParseJsonValue( const IFile& _file, char _fistNonWhite );	///< Recursive function to parse a value
+			void ParseJsonArray( const IFile& _file );	///< Recursive function to parse an array
+			void ParseJson( const IFile& _file );		///< Recursive function to parse an object
 			void ReadSraw( const IFile& _file );
 
 			/// \brief A node which is returned in case of an access to an
@@ -135,9 +137,11 @@ namespace Files {
 			///
 			Node( const Node& );
 
-			uint64_t GetNumElements() const		{ return m_numElements; }
+			uint64_t Size() const				{ return m_numElements; }
 			std::string GetName() const			{ return m_name; }
 			ElementType GetType() const			{ return m_type; }
+
+			/// \brief Set the nodes name. This might influence internal search structures.
 			void SetName( const std::string& _name );
 
 			/// \brief Sets type and dimension of the current node.
@@ -154,8 +158,9 @@ namespace Files {
 			/// \brief Casts the node data into float.
 			/// \details Casting assumes elementary data nodes. If the current
 			///		node is array data or an intermediate node the cast will
-			///		return garbage! Make sure this is an elementary node before
-			///		casting!
+			///		return the last indexed element.
+			///		
+			///		Make sure the node is of the assumed 
 			operator float() const				{ return *reinterpret_cast<const float*>(&m_buffer); }
 
 			/// \brief Casts the node data into double.
@@ -180,8 +185,6 @@ namespace Files {
 
 			/// \brief Casts the node data into string.
 			/// \details \see{operator float()}
-			///
-			///		The string is not buffered so this will cause a file access.
 			operator std::string() const;
 
 			/// \brief Read in a single value/child node by name.
@@ -206,6 +209,10 @@ namespace Files {
 			/// \throws std::string
 			void* GetData();
 
+			/// \brief Sets the node type if unknown and the new value.
+			/// \details The assignment fails if the type is incompatible. It
+			///		is only allowed to upcast values. so assigning an int8 to
+			///		an int16 or greater is perfectly valid.
 			float operator = (float _val);
 			double operator = (double _val);
 			int8_t operator = (int8_t _val);
@@ -218,6 +225,7 @@ namespace Files {
 			uint64_t operator = (uint64_t _val);
 			bool operator = (bool _val);
 			const std::string& operator = (const std::string& _val);
+			const char* operator = (const char* _val);
 
 			/// \brief Create a sub node with an array of elementary type.
 			/// \param [in] _name A new which should not be existent in the
@@ -228,18 +236,26 @@ namespace Files {
 			///		dimension.
 			Node& Add( const std::string& _name, ElementType _type, uint64_t _numElements );
 
+			/// \brief Ask for a child without creating it automatically.
+			/// \param [in] _name Name of the child (case sensitive)
+			/// \param [opt] [out] _child If the child is found the pointer will
+			///		point to it otherwise it is set to nullptr.
+			bool HasChild( const std::string& _name, const Node** _child = nullptr ) const;
+			bool HasChild( const std::string& _name, Node** _child = nullptr );
+
 			/// \brief Safer access methods with user defined default values.
-			///
+			/// \details Up-casts in integer and in unsigned types are silently
+			///		accepted. Otherwise the default value is returned.
 			float Get( float _default ) const		{ if(m_type == ElementType::FLOAT) return *this; return _default; }
 			double Get( double _default ) const		{ if(m_type == ElementType::DOUBLE) return *this; return _default; }
 			int8_t Get( int8_t _default ) const		{ if(m_type == ElementType::INT8) return *this; return _default; }
 			uint8_t Get( uint8_t _default ) const	{ if(m_type == ElementType::UINT8) return *this; return _default; }
-			int16_t Get( int16_t _default ) const	{ if(m_type == ElementType::INT16) return *this; return _default; }
-			uint16_t Get( uint16_t _default ) const	{ if(m_type == ElementType::UINT16) return *this; return _default; }
-			int32_t Get( int32_t _default ) const	{ if(m_type == ElementType::INT32) return *this; return _default; }
-			uint32_t Get( uint32_t _default ) const	{ if(m_type == ElementType::UINT32) return *this; return _default; }
-			int64_t Get( int64_t _default ) const	{ if(m_type == ElementType::INT64) return *this; return _default; }
-			uint64_t Get( uint64_t _default ) const	{ if(m_type == ElementType::UINT64) return *this; return _default; }
+			int16_t Get( int16_t _default ) const	{ if(m_type == ElementType::INT16 || m_type == ElementType::INT8) return *this; return _default; }
+			uint16_t Get( uint16_t _default ) const	{ if(m_type == ElementType::UINT16 || m_type == ElementType::UINT8) return *this; return _default; }
+			int32_t Get( int32_t _default ) const	{ if(m_type <= ElementType::INT32 && m_type >= ElementType::INT8) return *this; return _default; }
+			uint32_t Get( uint32_t _default ) const	{ if(m_type <= ElementType::UINT32 && m_type >= ElementType::UINT8) return *this; return _default; }
+			int64_t Get( int64_t _default ) const	{ if(m_type <= ElementType::INT64 && m_type >= ElementType::INT8) return *this; return _default; }
+			uint64_t Get( uint64_t _default ) const	{ if(m_type <= ElementType::UINT64 && m_type >= ElementType::UINT8) return *this; return _default; }
 			bool Get( bool _default ) const			{ if(m_type == ElementType::BIT) return *this; return _default; }
 
 			/// \brief Short to test if this node contains a string(-array)

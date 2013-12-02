@@ -1,15 +1,17 @@
 {
-  "Herausgeber": "Xema",
-  "Nummer": "1234-5678-9012-3456",
-  "Deckung": 2e+6,
-  "Währung": "EURO",
-  "Inhaber": {
-    "Name": "Mustermann",
-    "Vorname": "Max",
-    "männlich": true,
-    "Hobbys": [ "Reiten", "Golfen", "Lesen" ],
-    "Alter": 42,
-    "Kinder": [],
-    "Partner": null
-  }
+  "StringProperty": "Cookie",
+  "Number": 42,
+  "e": 2.718281828,
+  "Epic": true,
+  "Object": {
+    "Name": "Test",
+    "TypedArray": [1,2,3,4,5],
+    "ArrayArray": [[0.0,1.0],[2.0,3.0]],
+    "EmptyArray": [],
+    "Undef": null
+  },
+  "ObjectArray" : [
+    {"Name": "One"},
+	{"Name": "Two", "Extra": false}
+  ]
 }

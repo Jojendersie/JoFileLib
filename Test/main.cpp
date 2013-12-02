@@ -64,6 +64,11 @@ int main()
 		int w = Gr[string("Width")];
 		int h = Gr[string("Height")];
 		assert( w==1024 && h==768 );
+		// Test silent casts
+		int8_t w8 = Gr[string("Width")];
+		int16_t w16 = Gr[string("Width")];
+		int64_t w64 = Gr[string("Width")];
+
 		std::string DeviceName = Gr[string("DeviceName")];
 		auto& Contr2 = Wrap2[string("Controls")];
 		double s = Contr2[string("Speed")];
@@ -88,9 +93,12 @@ int main()
 		// TODO: benchmark buffering for read...
 		Jo::Files::HDDFile JsonFile( "example.json", true );
 		const Jo::Files::MetaFileWrapper Wrap3( JsonFile );
-		// Test output of some content
-		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Hobbys")][2] << '\n';
-		std::cout << (std::string)Wrap3[std::string("Inhaber")][std::string("Partner")];
+		// Test output of the content
+		std::cout << (string)Wrap3[string("StringProperty")] << '\n';
+		std::cout << (int)Wrap3[string("Number")] << '\n';
+		std::cout << (double)Wrap3[string("Object")][string("ArrayArray")][1][0] << '\n';
+		std::cout << (string)Wrap3[string("ObjectArray")][0][string("Name")] << '\n';
+		std::cout << (bool)Wrap3[string("ObjectArray")][1][string("Extra")] << '\n';
 
 	} catch( std::string e )
 	{

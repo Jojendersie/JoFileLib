@@ -62,14 +62,14 @@ namespace Files {
 			// It is a float!
 			if( charBuffer == '.' || charBuffer == 'e') _isFloat = true;
 			// Silently accept any delimiting character.
-		} while( charBuffer != ',' && charBuffer != '\n' && charBuffer != '}' );
+		} while( charBuffer != ',' && charBuffer != '\n' && charBuffer != '}' && charBuffer != ']' );
 
 		number.pop_back();
 		_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
 		return number.c_str();
 	}
 
-	static MetaFileWrapper::ElementType DeduceType( char _char )
+	/*static MetaFileWrapper::ElementType DeduceType( char _char )
 	{
 		switch(_char) {
 		case '{': return MetaFileWrapper::ElementType::NODE;
@@ -80,7 +80,7 @@ namespace Files {
 		case 'n': return MetaFileWrapper::ElementType::NODE;
 		}
 		return MetaFileWrapper::ElementType::UNKNOWN;
-	}
+	}*/
 
 	// ********************************************************************* //
 	// Determine the minimum variable size to store the value in _iVal
@@ -232,6 +232,91 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
+	void MetaFileWrapper::Node::ParseJsonValue( const IFile& _file, char _fistNonWhite )
+	{
+		// What type has the value?
+		switch(_fistNonWhite) {
+		case '{':
+			// Use recursion therefore the object must start with { -> go back
+			_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+			ParseJson( _file );
+			break;
+		case '"':
+			// This is a string
+//			m_type = ElementType::STRING;
+			*this = ReadJsonIdentifier( _file );
+			break;
+		case '[':
+			// Go into recursion
+			ParseJsonArray(_file);
+			break;
+		case 't':
+			// boolean value "true"
+			_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
+//			m_type = ElementType::BIT;
+			*this = true;
+			break;
+		case 'f':
+			// boolean value "false"
+			_file.Seek( 4, IFile::SeekMode::MOVE_FORWARD );
+//			m_type = ElementType::BIT;
+			*this = false;
+			break;
+		case 'n':
+			// Skip null reference -> node remains untyped
+			_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
+			break;
+		}
+
+		// Check for number types
+		if( _fistNonWhite >= '0' && _fistNonWhite <= '9' )
+		{
+			// Parse number
+		//	_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+			bool isFloat;
+			std::string number = _fistNonWhite + ReadJsonNumber( _file, isFloat );
+			if( isFloat ) {
+				//m_type = ElementType::DOUBLE;
+				*this = atof(number.c_str());
+			}
+			else {
+				//m_type = ElementType::INT32;
+				*this = atoi(number.c_str());
+			}
+		}
+	}
+
+	// ********************************************************************* //
+	void MetaFileWrapper::Node::ParseJsonArray( const IFile& _file )
+	{
+		// Expects the '[' as already read.
+
+		// Now there are values or the end of the array.
+		char charBuffer = FindFirstNonWhitespace(_file);
+		uint64_t index = 0;
+		while( charBuffer != ']' )
+		{
+			// Most values are read plane into the array except other arrays
+			// or objects which require a new node.
+			if( charBuffer == '[' || charBuffer == '{' )
+			{
+				m_type = ElementType::NODE;
+				(*this)[index].ParseJsonValue(_file, charBuffer);
+			} else {
+				if(index==0) ParseJsonValue(_file, charBuffer);
+				else (*this)[index].ParseJsonValue(_file, charBuffer);
+			}
+			++index;
+			charBuffer = FindFirstNonWhitespace(_file);
+			if( charBuffer != ',' && charBuffer != ']' )
+				throw std::string("Syntax error in json file. Expected , or ]");
+			// There is another value
+			if( charBuffer == ',' )
+				charBuffer = FindFirstNonWhitespace(_file);
+		}
+	}
+
+	// ********************************************************************* //
 	void MetaFileWrapper::Node::ParseJson( const IFile& _file )
 	{
 		// First step search opening '{'
@@ -250,64 +335,10 @@ namespace Files {
 			charBuffer = FindFirstNonWhitespace(_file);
 			if( charBuffer != ':' ) throw std::string("Syntax error in json file. Expected :");
 
-			// What type has the value?
-			charBuffer = FindFirstNonWhitespace(_file);
-			//ElementType type =  DeduceType( charBuffer );
 			Node& newNode = Add( identifier, ElementType::UNKNOWN, 0 );
-			bool endArray = true;
-			int index = 0;
-			do {
-				switch(charBuffer) {
-				case '{':
-					newNode.m_type = ElementType::NODE;
-					// Use recursion therefore the object must start with { -> go back
-					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
-					newNode.ParseJson( _file );
-					break;
-				case '"':
-					// This is a key - read name
-					newNode.m_type = ElementType::STRING;
-					newNode[index] = ReadJsonIdentifier( _file );
-					break;
-				case '[':
-					// go into the next turn
-					endArray = false;
-					break;
-				case ',': ++index; break;
-				case ']': endArray = true; break;
-				case 't':
-					_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
-					newNode.m_type = ElementType::BIT;
-					newNode[index] = true;
-					break;
-				case 'f':
-					_file.Seek( 4, IFile::SeekMode::MOVE_FORWARD );
-					newNode.m_type = ElementType::BIT;
-					newNode[index] = false;
-					break;
-				case 'n':
-					// Skip null reference
-					_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
-					break;
-				}
-				if( charBuffer >= '0' && charBuffer <= '9' )
-				{
-					// Parse number
-					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
-					bool isFloat;
-					std::string number = ReadJsonNumber( _file, isFloat );
-					if( isFloat ) {
-						newNode.m_type = ElementType::DOUBLE;
-						newNode[index] = atof(number.c_str());
-					}
-					else {
-						newNode.m_type = ElementType::INT32;
-						newNode[index] = atoi(number.c_str());
-					}
-				}
-				charBuffer = FindFirstNonWhitespace(_file);
-				// TODO: eof check
-			} while(!endArray);
+			newNode.ParseJsonValue(_file, FindFirstNonWhitespace(_file));
+			
+			charBuffer = FindFirstNonWhitespace(_file);
 		} while(charBuffer == ',');
 		if( charBuffer != '}' ) throw std::string("Syntax error in json file. Object must end with }");
 	}
@@ -385,13 +416,15 @@ namespace Files {
 			// "Name": 
 			buffer += '\"' + m_name + "\": ";
 			_file.Write( buffer.c_str(), buffer.length() );
-		}
+		} else for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
 
 		// Add nodes recursively
 		if( m_type == ElementType::NODE )
 		{
-			// TODO: node arrays?
-			_file.Write( "{\n", 2 );
+			// Node arrays? Look if there is a child without name.
+			bool nodeArray = (m_numElements==0) || (*this)[0].m_name == "";
+			if( nodeArray )	_file.Write( "[\n", 2 );
+			else _file.Write( "{\n", 2 );
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
 				(*this)[i].SaveAsJson( _file, _indent+2 );
@@ -400,12 +433,15 @@ namespace Files {
 				else _file.Write( "\n", 1 );
 			}
 			for( int i=0; i<_indent; ++i ) _file.Write( " ", 1 );
-			_file.Write( "}", 1 );
+			if( nodeArray )	_file.Write( "]", 1 );
+			else _file.Write( "}", 1 );
 		} else {
 			// No comes data
 			// If there is more than one element add array syntax []
+			// Also use [] for empty data arrays.
 			int subIndent = 0;
 			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 6; }
+			if( m_numElements==0 ) { _file.Write( "[", 1 ); }
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
 				switch( m_type )
@@ -427,7 +463,7 @@ namespace Files {
 				_file.Write( buffer.c_str(), buffer.length() );
 				if( i+1 < m_numElements ) _file.Write( ",\n", 2 );
 			}
-			if( m_numElements > 1 ) _file.Write( "]", 1 );
+			if( m_numElements > 1 || m_numElements==0 ) _file.Write( "]", 1 );
 		}
 	}
 
@@ -492,18 +528,8 @@ namespace Files {
 	// ********************************************************************* //
 	const MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( const std::string& _name ) const
 	{
-		if( m_type == ElementType::UNKNOWN ) return UndefinedNode; //throw "Invalid access to a node of unknown type: '" + m_name + "'.";
-		if( m_type != ElementType::NODE ) throw "Node '" + m_name + "' is of an elementary type and has no named children.";
-		
-		// Linear search for the correct child (assumes only a few children
-		// and requires array access -> no hash map)
-		unsigned int m_lastAccessed = 0;
-		while( m_lastAccessed < m_numElements )
-		{
-			if( _name == m_children[m_lastAccessed]->m_name )
-				return *m_children[m_lastAccessed];
-			++m_lastAccessed;
-		}
+		const Node* child;
+		if( HasChild( _name, &child ) ) return *child;
 
 		// Try to stay stable
 		return UndefinedNode;
@@ -534,13 +560,21 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
+	void MetaFileWrapper::Node::SetName( const std::string& _name )
+	{
+		// No additional changes required.
+		// This would be the case if the parent uses some faster search structure!
+		m_name = _name;
+	}
+
+	// ********************************************************************* //
 	void MetaFileWrapper::Node::Resize( uint64_t _size, ElementType _type )
 	{
 		// Check if type is correct and set the type
 		if( m_type == ElementType::UNKNOWN && _type == ElementType::UNKNOWN ) throw std::string("[Node::Reset] Current node has undefined type. Type must be defined by the Reset parameter.");
-		else if( m_type != _type && _type != ElementType::UNKNOWN ) throw std::string("[Node::Reset] Reset cannot change the type of a node.");
-		if( _type != ElementType::UNKNOWN )
+		if( m_type == ElementType::UNKNOWN )
 			m_type = _type;
+		if( m_type != _type && _type != ElementType::UNKNOWN ) throw std::string("[Node::Reset] Reset cannot change the type of a node.");
 
 		m_lastAccessed = 0;
 		switch( m_type )
@@ -655,27 +689,27 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-#define ASSIGNEMENT_OP(T, ET)											\
-	T MetaFileWrapper::Node::operator = (T _val)						\
-	{																	\
+#define ASSIGNEMENT_OP(T, ET, TYPE_FAIL)									\
+	T MetaFileWrapper::Node::operator = (T _val)							\
+	{																		\
 		if( m_type == ElementType::UNKNOWN ) {m_type = ET; m_numElements = 1;}				\
-		if( ET != m_type ) throw std::string("Cannot assign ") + #T + " to '" + m_name + "'";	\
-		if( m_numElements == 1 )										\
-			*reinterpret_cast<T*>(&m_buffer) = _val;					\
+		if( TYPE_FAIL ) throw std::string("Cannot assign ") + #T + " to '" + m_name + "'";	\
+		if( m_numElements == 1 )											\
+			*reinterpret_cast<T*>(&m_buffer) = _val;						\
 		else reinterpret_cast<T*>(m_bufferArray)[m_lastAccessed] = _val;	\
-		return _val;													\
+		return _val;														\
 	}
 
-	ASSIGNEMENT_OP(float, ElementType::FLOAT);
-	ASSIGNEMENT_OP(double, ElementType::DOUBLE);
-	ASSIGNEMENT_OP(int8_t, ElementType::INT8);
-	ASSIGNEMENT_OP(uint8_t, ElementType::UINT8);
-	ASSIGNEMENT_OP(int16_t, ElementType::INT16);
-	ASSIGNEMENT_OP(uint16_t, ElementType::UINT16);
-	ASSIGNEMENT_OP(int32_t, ElementType::INT32);
-	ASSIGNEMENT_OP(uint32_t, ElementType::UINT32);
-	ASSIGNEMENT_OP(int64_t, ElementType::INT64);
-	ASSIGNEMENT_OP(uint64_t, ElementType::UINT64);
+	ASSIGNEMENT_OP(float, ElementType::FLOAT, ElementType::FLOAT != m_type);
+	ASSIGNEMENT_OP(double, ElementType::DOUBLE, ElementType::DOUBLE != m_type);
+	ASSIGNEMENT_OP(int8_t, ElementType::INT8, ElementType::INT8 != m_type);
+	ASSIGNEMENT_OP(uint8_t, ElementType::UINT8, ElementType::UINT8 != m_type);
+	ASSIGNEMENT_OP(int16_t, ElementType::INT16, m_type != ElementType::INT16 && m_type != ElementType::INT8);
+	ASSIGNEMENT_OP(uint16_t, ElementType::UINT16, m_type != ElementType::UINT16 && m_type != ElementType::UINT8);
+	ASSIGNEMENT_OP(int32_t, ElementType::INT32, m_type > ElementType::INT32 || m_type < ElementType::INT8);
+	ASSIGNEMENT_OP(uint32_t, ElementType::UINT32, m_type > ElementType::UINT32 || m_type < ElementType::UINT8);
+	ASSIGNEMENT_OP(int64_t, ElementType::INT64, m_type > ElementType::INT64 || m_type < ElementType::INT8);
+	ASSIGNEMENT_OP(uint64_t, ElementType::UINT64, m_type > ElementType::UINT64 || m_type < ElementType::UINT8);
 
 	bool MetaFileWrapper::Node::operator = (bool _val)
 	{
@@ -694,7 +728,7 @@ namespace Files {
 
 	const std::string& MetaFileWrapper::Node::operator = (const std::string& _val)
 	{
-		if( m_type == ElementType::UNKNOWN ) {
+		if( m_type == ElementType::UNKNOWN || m_numElements==0 ) {
 			m_type = ElementType::STRING;
 			m_numElements = 1;
 			m_bufferArray = new std::string[1];
@@ -706,33 +740,73 @@ namespace Files {
 		return _val;
 	}
 
+	const char* MetaFileWrapper::Node::operator = (const char* _val)
+	{
+		if( m_type == ElementType::UNKNOWN || m_numElements==0 ) {
+			m_type = ElementType::STRING;
+			m_numElements = 1;
+			m_bufferArray = new std::string[1];
+			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
+		}
+		if( m_type != ElementType::STRING ) throw "Cannot assign 'const char*' to '" + m_name + "'";
+
+		*reinterpret_cast<std::string*>(m_buffer) = std::string(_val);
+		return _val;
+	}
+
 	// ********************************************************************* //
 	// Create a sub node with an array of elementary type.
 	MetaFileWrapper::Node& MetaFileWrapper::Node::Add( const std::string& _name, ElementType _type, uint64_t _numElements )
 	{
-		assert( _type != ElementType::NODE || _numElements == 0 );
 		assert( _type != ElementType::UNKNOWN || _numElements == 0 );
+		if( m_type != ElementType::NODE && m_type != ElementType::UNKNOWN )
+			throw "It is not possible to add a child node to '" + m_name + "'. It has the wrong type.";
+		// In case it was unknown set the type.
+		m_type = ElementType::NODE;
 
 		// Add a new child
 		++m_numElements;
 		m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
 		Node* newNode = (Node*)m_file->m_nodePool.Alloc();
 		m_children[m_numElements-1] = new (newNode) Node( m_file, _name );
-
-		// Set array type and data
-		newNode->m_type = _type;
-		newNode->m_numElements = _numElements;
-		if( _type == ElementType::STRING )
-		{
-			newNode->m_bufferArray = new std::string[size_t(_numElements)];
-			newNode->m_buffer = reinterpret_cast<uint64_t>(newNode->m_bufferArray);
-		} else if( _numElements > 1 )
-		{
-			uint64_t dataSize = (_numElements * ELEMENT_TYPE_SIZE[(int)_type] + 7) / 8;
-			newNode->m_bufferArray = malloc( size_t(dataSize) );
+		if( _numElements )
+			newNode->Resize( _numElements, _type );
+		else {
+			newNode->m_numElements = 0;
+			newNode->m_type = _type;
 		}
+
 		return *newNode;
 	}
+
+
+	// ********************************************************************* //
+	bool MetaFileWrapper::Node::HasChild( const std::string& _name, const Node** _child ) const
+	{
+		if( m_type == ElementType::UNKNOWN ) { if(_child) *_child = nullptr; return false;}
+		if( m_type != ElementType::NODE ) throw "Node '" + m_name + "' is of an elementary type and has no named children.";
+
+		// Linear search for the correct child (assumes only a few children
+		// and requires array access -> no hash map)
+		uint64_t m_lastAccessed = 0;
+		while( m_lastAccessed < m_numElements )
+		{
+			if( _name == m_children[m_lastAccessed]->m_name )
+				{ if(_child) *_child = &(*m_children[m_lastAccessed]); return true;}
+			++m_lastAccessed;
+		}
+		// Not found
+		// Avoid that m_lastAccessed is invalid
+		m_lastAccessed = m_numElements-1;
+		return false;
+	}
+
+	// ********************************************************************* //
+	bool MetaFileWrapper::Node::HasChild( const std::string& _name, Node** _child )
+	{
+		return const_cast<const Node*>(this)->HasChild(_name, (const Node**)_child);
+	}
+
 
 	// ********************************************************************* //
 	// Recursive calculation of the size occupied in a sraw file.

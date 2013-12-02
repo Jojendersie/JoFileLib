@@ -43,22 +43,33 @@ namespace Utils {
 		const std::string& GetCurrentDirectoryName() const;
 	};
 
+	/// \brief Splits a given path name into directory and file.
+	void SplitName( const std::string& _name, std::string& _dir, std::string& _file );
+
+	/// \brief Returns the path of the file but without the
+	///		file's name itself.
+	/// \param [in] _name Arbitrary file name.
+	std::string GetDirectory( const std::string& _name );
+
+	/// \brief Create a directory. The name should not contain a file name.
+	void MakeDir( const std::string& _name );
+
+	/// \brief Tests if a file or directory exists.
+	bool Exists( const std::string& _name );
+
+
+	// Not implemented:
 	/// \brief Takes an arbitrary file name makes sure that is has a full path.
 	/// \param [in] _name Arbitrary file name.
-	std::string MakeAbsolute( const std::string& _name );
+	/*std::string MakeAbsolute( const std::string& _name );
 
 	/// \brief Extracts the part after the last '.'.
 	/// \param [in] _name Arbitrary file name.
 	std::string GetExtension( const std::string& _name );
 
-	/// \brief Returns the absolute path of the file but without the
-	///		files name itself.
-	/// \param [in] _name Arbitrary file name.
-	std::string GetDirectory( const std::string& _name );
-
 	/// \brief Returns the file name without the directory
 	/// \param [in] _name Arbitrary file name.
-	std::string GetFileName( const std::string& _name );
+	std::string GetFileName( const std::string& _name );*/
 };
 };
 };

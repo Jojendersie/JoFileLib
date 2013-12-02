@@ -2,10 +2,17 @@
 #include "fileutils.hpp"
 #include <algorithm>
 
+//#include <sys/types.h>
+//#include <sys/stat.h>
+//#include <fcntl.h>
+
 #ifdef JO_WINDOWS
 #undef WINAPI_FAMILY
 #define WINAPI_FAMILY WINAPI_FAMILY_DESKTOP_APP
 #include <windows.h>
+//#include <direct.h>
+//#include <io.h>
+
 
 namespace Jo {
 namespace Files {
@@ -51,6 +58,44 @@ namespace Utils {
 		std::sort( m_directories.begin(), m_directories.end() );
 		std::sort( m_files.begin(), m_files.end(), [](const FileDesc& a, const FileDesc& b){ return a.name<b.name; } );
 	}
+
+
+	// ********************************************************************* //
+	// Takes an arbitrary file name makes sure that is has a full path.
+	/*std::string MakeAbsolute( const std::string& _name )
+	{
+		int startDir = _open(".", 0x0000);
+		std::string path;
+		if(startDir != -1)
+		{
+			if (!chdir(_name.c_str()))	// Change to directory
+			{
+				getcwd(path);			// And get its path
+				fchdir(startDir);		// And change back
+			}
+			_close(startDir);
+		}
+		return path;
+	}
+
+	// ********************************************************************* //
+	// Extracts the part after the last '.'.
+	std::string GetExtension( const std::string& _name )
+	{
+	}
+
+	// ********************************************************************* //
+	// Returns the absolute path of the file but without the files name itself.
+	std::string GetDirectory( const std::string& _name )
+	{
+	}
+
+	// ********************************************************************* //
+	// Returns the file name without the directory
+	std::string GetFileName( const std::string& _name )
+	{
+	}*/
+
 };
 };
 };
