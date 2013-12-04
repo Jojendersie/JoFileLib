@@ -44,6 +44,9 @@ namespace Files {
 
 		/// \details Seek can only jump within the existing file.
 		virtual void Seek( uint64_t _numBytes, SeekMode _mode = SeekMode::SET ) const override;
+
+		/// \brief Write the buffer to disk if there are written bytes pending.
+		void Flush();
 	};
 };
 };

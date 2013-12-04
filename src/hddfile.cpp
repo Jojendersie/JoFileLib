@@ -31,7 +31,7 @@ namespace Files {
 
 		// Allocate temporary write buffer.
 		if( !_readOnly )
-			std::setvbuf( m_file, nullptr, _IOFBF, 4096 );
+			std::setvbuf( m_file, nullptr, _IOFBF, _bufferSize );
 
 
 		// Determine file size
@@ -84,5 +84,11 @@ namespace Files {
 			offset -= stepSize;
 		}
 	}
+
+	void HDDFile::Flush()
+	{
+		fflush( m_file );
+	}
+
 };
 };

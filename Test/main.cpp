@@ -36,8 +36,8 @@ int main()
 		Contr[string("InvertY")] = true;
 
 		// Create an array node
-		auto& KeyMap = Contr.Add(string("Keys"), Jo::Files::MetaFileWrapper::ElementType::INT16, 100 );
-		for( int i=0; i<100; ++i )
+		auto& KeyMap = Contr.Add(string("Keys"), Jo::Files::MetaFileWrapper::ElementType::INT16, 10 );
+		for( int i=0; i<10; ++i )
 			KeyMap[i] = (int16_t)i;
 
 		// Access an empty array and create implicit
@@ -48,6 +48,12 @@ int main()
 		auto& Cookies2 = Contr.Add(string("Cookies2"), Jo::Files::MetaFileWrapper::ElementType::STRING, 0 );
 		Cookies2[0] = std::string("choco");
 		Cookies2[1] = std::string("vanilla");
+
+		// Create an array of arrays with only few elements
+		auto& AA = Contr.Add(string("AAtest"), Jo::Files::MetaFileWrapper::ElementType::NODE, 2);
+		AA[0][0] = 42;
+		AA[1][0] = 24;
+		AA[1][1] = 96;
 
 
 		Jo::Files::MemFile File;

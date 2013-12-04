@@ -300,6 +300,7 @@ namespace Files {
 			// or objects which require a new node.
 			if( charBuffer == '[' || charBuffer == '{' )
 			{
+				if(index != 0 && m_type!=ElementType::NODE) throw std::string("[Node::ParseJsonArray] Arrays must have the same type everywhere!");
 				m_type = ElementType::NODE;
 				(*this)[index].ParseJsonValue(_file, charBuffer);
 			} else {
@@ -436,12 +437,15 @@ namespace Files {
 			if( nodeArray )	_file.Write( "]", 1 );
 			else _file.Write( "}", 1 );
 		} else {
-			// No comes data
+			// Now data is coming
 			// If there is more than one element add array syntax []
 			// Also use [] for empty data arrays.
 			int subIndent = 0;
-			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 6; }
-			if( m_numElements==0 ) { _file.Write( "[", 1 ); }
+			// This is a child node of an array -> Array of value-arrays
+			bool isArray = (m_name == "") || ( m_numElements != 1 );
+//			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 1; }
+			//if( m_numElements == 0 ) { _file.Write( "[", 1 ); }
+			if(isArray) _file.Write( "[", 1 );
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
 				switch( m_type )
@@ -459,11 +463,11 @@ namespace Files {
 				case ElementType::UINT64:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
 				case ElementType::STRING:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
 				}
-				for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
+				//for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
 				_file.Write( buffer.c_str(), buffer.length() );
-				if( i+1 < m_numElements ) _file.Write( ",\n", 2 );
+				if( i+1 < m_numElements ) _file.Write( ", ", 2 );
 			}
-			if( m_numElements > 1 || m_numElements==0 ) _file.Write( "]", 1 );
+			if( isArray ) _file.Write( "]", 1 );
 		}
 	}
 
@@ -659,6 +663,8 @@ namespace Files {
 
 	MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( uint64_t _index )
 	{
+		// Automatic type detection is allowed for the first element
+		if( m_type == ElementType::UNKNOWN && _index==0 ) return *this;
 		if( m_type == ElementType::UNKNOWN ) throw std::string("[Node::operator[]] Index access to an undefined node not allowed!");
 		// Make array larger
 		// TODO: could be faster by the use of capacity (allocate more).

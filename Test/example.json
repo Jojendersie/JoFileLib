@@ -1,6 +1,6 @@
 {
   "StringProperty": "Cookie",
-  "Number": 42,
+  "Number": [42],
   "e": 2.718281828,
   "Epic": true,
   "Object": {
