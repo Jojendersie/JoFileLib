@@ -354,8 +354,11 @@ namespace Files {
 
 		// Map all STRINGxx types to STRING but remember the size for ReadString.
 		// The number is useless for non string types
-		int stringSize = 1<<((int)m_type-(int)MetaFileWrapper::ElementType::STRING);
-		if( (int)m_type <= 0x4 && m_type > ElementType::STRING ) m_type = ElementType::STRING;
+		int stringSize = 1;
+		if( (int)m_type <= 0x4 && m_type > ElementType::STRING ) {
+			stringSize = 1<<((int)m_type-(int)MetaFileWrapper::ElementType::STRING);
+			m_type = ElementType::STRING;
+		}
 
 		// Then the identifier follows as STRING8
 		ReadString( _file, 1, m_name );
@@ -377,7 +380,8 @@ namespace Files {
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
 				Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-				m_children[i] = new (newNode) Node( m_file, _file, Format::SRAW );
+				m_children[i] = new (newNode) Node( m_file, "" );
+				m_children[i]->ReadSraw( _file );
 			}
 		} else {
 			// Now the files cursor is at the beginning of the data
@@ -392,7 +396,7 @@ namespace Files {
 			{
 				// Buffer small elementary type without extra memory
 				_file.Read( dataSize, &m_buffer );
-			} else {
+			} else if( m_numElements > 1 ) {
 				// Buffer larger memory in one block.
 				m_bufferArray = malloc( size_t(dataSize) );
 				_file.Read( dataSize, m_bufferArray );
@@ -821,8 +825,16 @@ namespace Files {
 		if( m_type == ElementType::NODE )
 		{
 			uint64_t dataSize = 0;
-			for( uint64_t i=0; i<m_numElements; ++i )
+			for( uint64_t i=0; i<m_numElements; ++i ) {
 				dataSize += m_children[i]->GetDataSize();
+				// Names are always stored as STRING8
+				uint64_t length = m_children[i]->GetName().length();
+				dataSize += length + 1;
+				dataSize += 1;	// CodeNType
+				dataSize += uint64_t(1<<GetNumRequiredBytes(m_children[i]->Size()));	// NELEMS
+				if(m_children[i]->GetType() == ElementType::NODE || m_children[i]->GetType() == ElementType::STRING)
+					dataSize += 8;	// Datasize
+			}
 			return dataSize;
 		} else if( m_type == ElementType::STRING ) {
 			// Go through all strings and determine the correct string type and
