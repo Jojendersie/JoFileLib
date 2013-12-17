@@ -5,16 +5,15 @@
 namespace Jo {
 namespace Files {
 
-	HDDFile::HDDFile( const std::string& _name, bool _readOnly, int _bufferSize ) :
-		IFile(0, _readOnly, !_readOnly), m_pendingWriteBytes(0)
+	HDDFile::HDDFile( const std::string& _name, ModeFlags _flags, int _bufferSize ) :
+		IFile(0, true, true), m_pendingWriteBytes(0)
 	{
-		const char* modeStr = "wb";
-		if( _readOnly ) modeStr = "rb";
+		const char* modeStr = "r+b";
 
 		m_file = fopen( _name.c_str(), modeStr );
 
 		// In write mode it could be that the directory is missing
-		if(!m_file && !_readOnly)
+		if(!m_file && (_flags & CREATE_FILE))
 		{
 			// Search for the directory
 			std::string dir = Utils::GetDirectory(_name);
@@ -22,22 +21,31 @@ namespace Files {
 			{
 				// Create missing directory
 				Utils::MakeDir(dir);
-				// Retry
-				m_file = fopen( _name.c_str(), modeStr );
+				// Retry: w+ might destroy content, but we are sure nothing
+				// like that exists!
+				m_file = fopen( _name.c_str(), "w+b" );
 			}
+		}
+
+		// Retry with read only (permissions?)
+		if(!m_file)
+		{
+			m_writeAccess = false;
+			modeStr = "rb";
+			m_file = fopen( _name.c_str(), modeStr );
 		}
 
 		if(!m_file) throw "Failed to open file '" + _name + "'";
 
 		// Allocate temporary write buffer.
-		if( !_readOnly )
-			std::setvbuf( m_file, nullptr, _IOFBF, _bufferSize );
+		std::setvbuf( m_file, nullptr, _IOFBF, _bufferSize );
 
 
 		// Determine file size
 		fseek( m_file, 0, SEEK_END );
 		m_size = ftell( m_file );
-		fseek( m_file, 0, SEEK_SET );
+		if( !(_flags & APPEND) )
+			fseek( m_file, 0, SEEK_SET );
 	}
 
 	HDDFile::~HDDFile()

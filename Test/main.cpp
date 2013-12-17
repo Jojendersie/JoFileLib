@@ -15,6 +15,7 @@
 using namespace std;
 
 void TestPngLoad();
+void TestRndAccessHDDFile();
 
 int main()
 {
@@ -58,9 +59,9 @@ int main()
 
 		Jo::Files::MemFile File;
 		Wrap1.Write( File, Jo::Files::Format::SRAW );
-		Jo::Files::HDDFile SaveTestJsonFile( "write_test.json", false );
+		Jo::Files::HDDFile SaveTestJsonFile( "write_test.json", Jo::Files::HDDFile::CREATE_FILE );
 		Wrap1.Write( SaveTestJsonFile, Jo::Files::Format::JSON );
-		Jo::Files::HDDFile SaveTestSrawFile( "write_test.sraw", false );
+		Jo::Files::HDDFile SaveTestSrawFile( "write_test.sraw", Jo::Files::HDDFile::CREATE_FILE );
 		Wrap1.Write( SaveTestSrawFile, Jo::Files::Format::SRAW );
 
 		// READ ************************************************
@@ -80,7 +81,7 @@ int main()
 		double s = Contr2[string("Speed")];
 		bool bInvert = Contr2[string("InvertY")];
 		auto& KeyMap2 = Contr2[string("Keys")];
-		for( int i=0; i<100; ++i )
+		for( int i=0; i<10; ++i )
 			std::cout << (int16_t)KeyMap[i] << ' ';
 
 		auto& RCookies = Contr2[string("Cookies")];
@@ -97,7 +98,7 @@ int main()
 
 		// Parse JSON ************************************************
 		// TODO: benchmark buffering for read...
-		Jo::Files::HDDFile JsonFile( "example.json", true );
+		Jo::Files::HDDFile JsonFile( "example.json" );
 		const Jo::Files::MetaFileWrapper Wrap3( JsonFile );
 		// Test output of the content
 		std::cout << (string)Wrap3[string("StringProperty")] << '\n';
@@ -111,5 +112,45 @@ int main()
 		std::cout << e;
 	}
 
+	TestRndAccessHDDFile();
 	TestPngLoad();
+}
+
+
+
+void TestRndAccessHDDFile()
+{
+	Jo::Files::HDDFile file( "rndaccess.test", Jo::Files::HDDFile::CREATE_FILE );
+
+	// Sequential write
+	for( int i=0; i<10; ++i )
+		file.Write( &i, sizeof(int) );
+
+	// Skip back (something like "correct header")
+	file.Seek( 0 );
+	int buf = 1000;
+	file.Write( &buf, sizeof(int) );
+
+	// Skip into any area
+	file.Seek( sizeof(int) * 15 );
+	file.Write( &buf, sizeof(int) );
+
+	// Go back and test data
+	file.Seek( 0 );
+	file.Read( sizeof(int), &buf );
+	if( buf != 1000 ) std::cout << "[TestRndAccessHDDFile] Reading first int failed.\n";
+	for( int i=1; i<10; ++i )
+	{
+		file.Read( sizeof(int), &buf );
+		if( buf != i ) std::cout << "[TestRndAccessHDDFile] Reading list of ints failed.\n";
+	}
+	// Output the undefined part + the last 1000
+	for( int i=11; i<16; ++i )
+	{
+		file.Read( sizeof(int), &buf );
+		std::cout << buf << ", ";
+	}
+	file.Read( sizeof(int), &buf );
+	if( buf == 1000 ) std::cout << "\nRandom access test OK\n";
+	else std::cout << "\nRandom access test failed\n";
 }

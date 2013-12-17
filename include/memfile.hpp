@@ -18,6 +18,9 @@ namespace Files {
 		///		with real data.
 		void* m_buffer;
 		uint64_t m_capacity;
+		/// \brief False if the file wraps an external memory -> memory will
+		///		not be deleted with the file.
+		bool m_ownsMemory;
 	public:
 		/// \brief Uses an existing memory for file read access.
 		/// \param [in] _memory The memory which should be wrapped. Do not

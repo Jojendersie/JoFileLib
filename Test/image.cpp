@@ -7,7 +7,7 @@ void TestPngLoad()
 	try {
 		std::cout << "\n******* png loader test *******\n";
 		// Load a png file without interlacing
-		Jo::Files::HDDFile file("normal.png", true);
+		Jo::Files::HDDFile file("normal.png");
 		Jo::Files::ImageWrapper normalPng( file, Jo::Files::Format::PNG );
 
 		std::cout << "Loaded normal.png:\n";
@@ -15,7 +15,7 @@ void TestPngLoad()
 		std::cout << "\tChannels: " << normalPng.NumChannels() << '\n';
 		std::cout << "\tBitdepth: " << normalPng.BitDepth() << '\n';
 
-		Jo::Files::HDDFile file2("interlaced.png", true);
+		Jo::Files::HDDFile file2("interlaced.png");
 		Jo::Files::ImageWrapper interlacedPng( file2, Jo::Files::Format::PNG );
 
 		std::cout << "Loaded interlaced.png:\n";
@@ -36,7 +36,7 @@ void TestPngLoad()
 				normalPng.Set(x,y,3, 1.0f);
 			}
 
-		Jo::Files::HDDFile file3("out.png", false);
+		Jo::Files::HDDFile file3("out.png", Jo::Files::HDDFile::CREATE_FILE);
 		normalPng.Write( file3, Jo::Files::Format::PNG );
 
 		int breakpoint;

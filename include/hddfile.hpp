@@ -21,21 +21,21 @@ namespace Files {
 	public:
 		/// \brief Determine how a file should be opened.
 		/// \details The mode flags can be used in any combination.
-		/*enum struct ModeFlags {
-			READ,
-			WRITE
-		};*/
+		enum ModeFlags {
+			CREATE_FILE = 1,	///< Create the file if not existent. This includes the path.
+			APPEND = 2,			///< Set cursor to the end of file (standard is at the beginning)
+		};
 
 		/// \brief Open a file on hard disk.
-		/// \details If the file/directory does not exist it will be created if
-		///		opened in write mode.
+		/// \details If the file/directory does not exist it will be created or
+		///		not depending on _failIfNotExistent.
 		/// \param [in] _name Name and path to a file on disk.
-		/// \param [in] _readOnly Try to open file in read mode. This will fail
-		///		with an exception if the file does not exists. To open a file
-		///		in write mode may also fail if permission is denied.
+		/// \param [in] _failIfNotExistent Try to open file in read+write mode. This
+		///		will fail with an exception if the file does not exists. To
+		///		open a file may also fail if permission is denied.
 		/// \param [in] _bufferSize Write operations are done buffered where
 		///		the default buffer size is 4KB.
-		HDDFile( const std::string& _name, bool _readOnly, int _bufferSize = 4096 );
+		HDDFile( const std::string& _name, ModeFlags _flags = ModeFlags(0), int _bufferSize = 4096 );
 
 		~HDDFile();
 

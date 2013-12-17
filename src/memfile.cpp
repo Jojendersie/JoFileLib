@@ -9,6 +9,7 @@ namespace Files {
 		IFile( _size, true, false )
 	{
 		m_buffer = (void*)_memory;
+		m_ownsMemory = false;
 		m_capacity = _size;
 	}
 
@@ -17,12 +18,13 @@ namespace Files {
 		IFile( 0, true, true )
 	{
 		m_buffer = malloc(size_t(_capacity));
+		m_ownsMemory = true;
 		m_capacity = _capacity;
 	}
 
 	MemFile::~MemFile()
 	{
-		free( m_buffer );
+		if( m_ownsMemory ) free( m_buffer );
 		m_buffer = nullptr;
 		m_capacity = 0;
 	}

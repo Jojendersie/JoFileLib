@@ -49,6 +49,10 @@ namespace Files {
 		/// \return true if things can be written into this file.
 		bool CanWrite() const			{ return m_writeAccess; }
 
+		/// \brief Was this file opened with read access?
+		/// \return true if file can be read.
+		bool CanRead() const			{ return m_readAccess; }
+
 		bool IsEof() const	{ return m_size == m_cursor; }
 	};
 };
