@@ -161,27 +161,27 @@ namespace Files {
 			///		return the last indexed element.
 			///		
 			///		Make sure the node is of the assumed 
-			operator float() const				{ return *reinterpret_cast<const float*>(&m_buffer); }
+			operator float() const				{ return (m_numElements <= 1) ? *reinterpret_cast<const float*>(&m_buffer) : reinterpret_cast<const float*>(m_bufferArray)[m_lastAccessed]; }
 
 			/// \brief Casts the node data into double.
 			/// \details \see{operator float()}
-			operator double() const				{ return *reinterpret_cast<const double*>(&m_buffer); }
+			operator double() const				{ return (m_numElements <= 1) ? *reinterpret_cast<const double*>(&m_buffer) : reinterpret_cast<const double*>(m_bufferArray)[m_lastAccessed]; }
 
 			/// \brief Casts the node data into signed byte.
 			/// \details \see{operator float()}
-			operator int8_t() const				{ return *reinterpret_cast<const int8_t*>(&m_buffer); }
+			operator int8_t() const				{ return (m_numElements <= 1) ? *reinterpret_cast<const int8_t*>(&m_buffer) : reinterpret_cast<const int8_t*>(m_bufferArray)[m_lastAccessed]; }
 
 			/// \brief Casts the node data into unsigned byte.
 			/// \details \see{operator float()}
-			operator uint8_t() const			{ return *reinterpret_cast<const uint8_t*>(&m_buffer); }
+			operator uint8_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const uint8_t*>(&m_buffer) : reinterpret_cast<const uint8_t*>(m_bufferArray)[m_lastAccessed]; }
 
-			operator int16_t() const			{ return *reinterpret_cast<const int16_t*>(&m_buffer); }
-			operator uint16_t() const			{ return *reinterpret_cast<const uint16_t*>(&m_buffer); }
-			operator int32_t() const			{ return *reinterpret_cast<const int32_t*>(&m_buffer); }
-			operator uint32_t() const			{ return *reinterpret_cast<const uint32_t*>(&m_buffer); }
-			operator int64_t() const			{ return *reinterpret_cast<const int64_t*>(&m_buffer); }
-			operator uint64_t() const			{ return m_buffer; }
-			operator bool() const				{ return m_buffer != 0; }
+			operator int16_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const int16_t*>(&m_buffer) : reinterpret_cast<const int16_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator uint16_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const uint16_t*>(&m_buffer) : reinterpret_cast<const uint16_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator int32_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const int32_t*>(&m_buffer) : reinterpret_cast<const int32_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator uint32_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const uint32_t*>(&m_buffer) : reinterpret_cast<const uint32_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator int64_t() const			{ return (m_numElements <= 1) ? *reinterpret_cast<const int64_t*>(&m_buffer) : reinterpret_cast<const int64_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator uint64_t() const			{ return (m_numElements <= 1) ? m_buffer : reinterpret_cast<const uint64_t*>(m_bufferArray)[m_lastAccessed]; }
+			operator bool() const				{ return (m_numElements <= 1) ? (m_buffer != 0) : ((reinterpret_cast<const uint32_t*>(m_bufferArray)[m_lastAccessed/32] & (1 << (m_lastAccessed & 0xf))) != 0); }
 
 			/// \brief Casts the node data into string.
 			/// \details \see{operator float()}

@@ -82,7 +82,7 @@ int main()
 		bool bInvert = Contr2[string("InvertY")];
 		auto& KeyMap2 = Contr2[string("Keys")];
 		for( int i=0; i<10; ++i )
-			std::cout << (int16_t)KeyMap[i] << ' ';
+			std::cout << (int16_t)KeyMap2[i] << ' ';
 
 		auto& RCookies = Contr2[string("Cookies")];
 		std::cout << '\n';

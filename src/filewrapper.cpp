@@ -391,7 +391,6 @@ namespace Files {
 				m_bufferArray = new std::string[size_t(m_numElements)];
 				for( uint64_t i=0; i<m_numElements; ++i )
 					ReadString( _file, stringSize, ((std::string*)m_bufferArray)[i] );
-				m_buffer = reinterpret_cast<uint64_t>((std::string*)m_bufferArray);
 			} else if( m_numElements == 1 )
 			{
 				// Buffer small elementary type without extra memory
@@ -462,9 +461,9 @@ namespace Files {
 				case ElementType::INT32:	buffer = std::to_string( int32_t((*this)[i]) );			break;
 				case ElementType::INT64:	buffer = std::to_string( int64_t((*this)[i]) );			break;
 				case ElementType::UINT8:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT16:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT32:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
-				case ElementType::UINT64:	buffer = std::to_string( uint8_t((*this)[i]) );			break;
+				case ElementType::UINT16:	buffer = std::to_string( uint16_t((*this)[i]) );		break;
+				case ElementType::UINT32:	buffer = std::to_string( uint32_t((*this)[i]) );		break;
+				case ElementType::UINT64:	buffer = std::to_string( uint64_t((*this)[i]) );		break;
 				case ElementType::STRING:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
 				}
 				//for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
@@ -602,7 +601,6 @@ namespace Files {
 		case ElementType::STRING: {
 			std::string* oldBuffer = reinterpret_cast<std::string*>(m_bufferArray);
 			m_bufferArray = new std::string[size_t(_size)];
-			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
 			for( uint64_t i=0; i<std::min(m_numElements,_size); ++i )
 				reinterpret_cast<std::string*>(m_bufferArray)[i] = std::move(oldBuffer[i]);
 			delete[] oldBuffer;
@@ -637,10 +635,11 @@ namespace Files {
 		if( m_type == ElementType::NODE ) return *m_children[_index];
 
 		// Fast buffered element access
-		if( m_lastAccessed == _index ) return *this;
+		//if( m_lastAccessed == _index ) return *this;
 
 		// Load the primitive data into m_buffer
-		switch( m_type )
+		//if( ElementType::STRING ) 
+		/*switch( m_type )
 		{
 		case ElementType::STRING:
 			// Find start address in buffer and store it in m_buffer
@@ -657,7 +656,7 @@ namespace Files {
 		case ElementType::UINT64: *(uint64_t*)&m_buffer = ((uint64_t*)m_bufferArray)[_index]; break;
 		case ElementType::FLOAT: *(float*)&m_buffer = ((float*)m_bufferArray)[_index]; break;
 		case ElementType::DOUBLE: *(double*)&m_buffer = ((double*)m_bufferArray)[_index]; break;
-		}
+		}*/
 
 		m_lastAccessed = _index;
 
@@ -667,25 +666,31 @@ namespace Files {
 
 	MetaFileWrapper::Node& MetaFileWrapper::Node::operator[]( uint64_t _index )
 	{
-		// Automatic type detection is allowed for the first element
-		if( m_type == ElementType::UNKNOWN && _index==0 ) return *this;
-		if( m_type == ElementType::UNKNOWN ) throw std::string("[Node::operator[]] Index access to an undefined node not allowed!");
+		if( m_type == ElementType::UNKNOWN )
+		{
+			// Automatic type detection is allowed for the first element
+			if( _index==0 ) return *this;
+			// Otherwise this is an error
+			throw std::string("[Node::operator[]] Index access to an undefined node not allowed!");
+		}
 		// Make array larger
 		// TODO: could be faster by the use of capacity (allocate more).
 		if( _index >= m_numElements ) Resize( _index+1 );
 
-		// Just use the constant variant and cast the result to non const.
-		// This is perfectly valid because we know we are actually not constant.
-		return const_cast<Node&>(const_cast<const Node&>(*this)[_index]);
+		// In case of nodes there is no casting afterwards which dereferences
+		// the item. The child node must be returned immediately.
+		if( m_type == ElementType::NODE ) return *m_children[_index];
+
+		m_lastAccessed = _index;
+		return *this;
 	};
 
 	// Casts the node data into string.
 	MetaFileWrapper::Node::operator std::string() const
 	{
-		if( m_buffer == 0 ) return std::string("");
 		// Because of array access the m_buffer is the start address of
 		// the string in m_bufferArray.
-		return *reinterpret_cast<std::string*>(m_buffer);
+		return reinterpret_cast<std::string*>(m_bufferArray)[m_lastAccessed];
 	}
 
 	void* MetaFileWrapper::Node::GetData()
@@ -742,11 +747,11 @@ namespace Files {
 			m_type = ElementType::STRING;
 			m_numElements = 1;
 			m_bufferArray = new std::string[1];
-			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
 		}
 		if( m_type != ElementType::STRING ) throw "Cannot assign std::string to '" + m_name + "'";
 
-		*reinterpret_cast<std::string*>(m_buffer) = _val;
+		((std::string*)m_bufferArray)[m_lastAccessed] = _val;
+		//*reinterpret_cast<std::string*>(m_buffer) = _val;
 		return _val;
 	}
 
@@ -756,11 +761,11 @@ namespace Files {
 			m_type = ElementType::STRING;
 			m_numElements = 1;
 			m_bufferArray = new std::string[1];
-			m_buffer = reinterpret_cast<uint64_t>(m_bufferArray);
 		}
 		if( m_type != ElementType::STRING ) throw "Cannot assign 'const char*' to '" + m_name + "'";
 
-		*reinterpret_cast<std::string*>(m_buffer) = std::string(_val);
+		((std::string*)m_bufferArray)[m_lastAccessed] = _val;
+		//*reinterpret_cast<std::string*>(m_buffer) = _val;
 		return _val;
 	}
 
