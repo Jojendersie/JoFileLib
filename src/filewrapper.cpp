@@ -3,12 +3,17 @@
 #include "filewrapper.hpp"
 #include <cctype>
 #include <string>
+using namespace std; 
 
 namespace Jo {
 namespace Files {
 
-	const int64_t MetaFileWrapper::ELEMENT_TYPE_SIZE[] = { -1, -1, -1, -1, -1, 1, 8, 16, 32, 64, 8, 16, 32, 64, 32, 64 };
+	const int64_t MetaFileWrapper::ELEMENT_TYPE_SIZE[] = { sizeof(Node*)*8, sizeof(std::string)*8, -1, -1, -1, 1, 8, 16, 32, 64, 8, 16, 32, 64, 32, 64 };
 	static int NELEM_SIZE(uint8_t _code) { return 1<<((_code & 0x30)>>4); }
+
+	/// \brief Calculate the space required by the bufferArray
+#define ARRAY_SIZE(n,T)		(((n) * MetaFileWrapper::ELEMENT_TYPE_SIZE[(int)(T)] + 7) / 8)
+
 
 	MetaFileWrapper::Node MetaFileWrapper::Node::UndefinedNode( nullptr, std::string() );
 
@@ -155,8 +160,7 @@ namespace Files {
 		m_file( _wrapper ),
 		m_numElements( 0 ),
 		m_type( ElementType::UNKNOWN ),
-		m_children( nullptr ),
-		m_buffer( 0 ),
+		m_bufferArray( m_buffer ),
 		m_lastAccessed( 0 ),
 		m_name( _name )
 	{
@@ -167,8 +171,7 @@ namespace Files {
 		m_file( _wrapper ),
 		m_numElements( 0 ),
 		m_type( ElementType::UNKNOWN ),
-		m_children( nullptr ),
-		m_buffer( 0 ),
+		m_bufferArray( m_buffer ),
 		m_lastAccessed( 0 ),
 		m_name("")
 	{
@@ -183,30 +186,30 @@ namespace Files {
 			if( m_type == ElementType::NODE )
 			{
 				for( uint64_t i=0; i<m_numElements; ++i )
-					m_file->m_nodePool.Delete( m_children[i] );
-				free( m_children );
-			} else if( m_bufferArray )
+					m_file->m_nodePool.Delete( ((Node**)m_bufferArray)[i] );
+			} else if( m_type == ElementType::STRING )
 			{
-				if( m_type == ElementType::STRING )
-					delete[] (std::string*)m_bufferArray;
-				else
-					free( m_bufferArray );
+				for( uint64_t i=0; i<m_numElements; ++i )
+					((string*)m_bufferArray+i)->~string();
 			}
+
+			if( ARRAY_SIZE(m_numElements, m_type) > sizeof(m_buffer) )
+				free(m_bufferArray);
 		}
 	}
 
 	// ********************************************************************* //
 	// Flat copy construction. The children are just ignored.
-	MetaFileWrapper::Node::Node( const Node& _Node ) :
+	/*MetaFileWrapper::Node::Node( const Node& _Node ) :
 		m_file( nullptr ),		// This show the destructor that the current node is a flat copy
 		m_numElements( _Node.m_numElements ),
 		m_type( _Node.m_type ),
-		m_children( _Node.m_children ),
+		m_bufferArray( _Node.m_bufferArray ),
 		m_buffer( _Node.m_buffer ),
 		m_lastAccessed( _Node.m_lastAccessed ),
 		m_name( _Node.m_name )
 	{
-	}
+	}*/
 
 	// ********************************************************************* //
 	void MetaFileWrapper::Node::Read( const IFile& _file, Format _format )
@@ -364,40 +367,35 @@ namespace Files {
 		ReadString( _file, 1, m_name );
 
 		// Read NELEMS (array dimension)
-		_file.Read( NELEM_SIZE(codeNType), &m_numElements );
+		uint64_t numElements = 0;
+		_file.Read( NELEM_SIZE(codeNType), &numElements );
 
-		// Read or calculate the data block size
+		// Read or calculate the data block size (could be used to skip blocks too)
 		uint64_t dataSize;
 		if( m_type == ElementType::NODE || m_type == ElementType::STRING )
 			_file.Read( 8, &dataSize );
 		else
-			dataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
+			dataSize = ARRAY_SIZE(numElements, m_type);
+
+		Resize( numElements );
 
 		if( m_type == ElementType::NODE )
 		{
 			// Recursive read (file cursor is at the correct position).
-			m_children = (Node**)malloc( size_t(m_numElements * sizeof(Node*)) );
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
 				Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-				m_children[i] = new (newNode) Node( m_file, "" );
-				m_children[i]->ReadSraw( _file );
+				((Node**)m_bufferArray)[i] = new (newNode) Node( m_file, "" );
+				((Node**)m_bufferArray)[i]->ReadSraw( _file );
 			}
 		} else {
 			// Now the files cursor is at the beginning of the data
 			if( m_type == ElementType::STRING )
 			{
 				// Buffer single string objects
-				m_bufferArray = new std::string[size_t(m_numElements)];
 				for( uint64_t i=0; i<m_numElements; ++i )
 					ReadString( _file, stringSize, ((std::string*)m_bufferArray)[i] );
-			} else if( m_numElements == 1 )
-			{
-				// Buffer small elementary type without extra memory
-				_file.Read( dataSize, &m_buffer );
-			} else if( m_numElements > 1 ) {
-				// Buffer larger memory in one block.
-				m_bufferArray = malloc( size_t(dataSize) );
+			} else if( m_numElements > 0 ) {
 				_file.Read( dataSize, m_bufferArray );
 			}
 		}
@@ -513,7 +511,7 @@ namespace Files {
 		{
 			// Recursive write.
 			for( uint64_t i=0; i<m_numElements; ++i )
-				m_children[i]->SaveAsSraw( _file );
+				((Node**)m_bufferArray)[i]->SaveAsSraw( _file );
 		} else if( m_type == ElementType::STRING ) {
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
@@ -522,12 +520,7 @@ namespace Files {
 				_file.Write( ((std::string*)m_bufferArray)[i].data(), length );
 			}
 		} else {
-			if( m_numElements == 1 )
-			{
-				_file.Write( &m_buffer, dataSize );
-			} else {
-				_file.Write( m_bufferArray, dataSize );
-			}
+			_file.Write( m_bufferArray, dataSize );
 		}
 	}
 
@@ -553,17 +546,15 @@ namespace Files {
 		unsigned int m_lastAccessed = 0;
 		while( m_lastAccessed < m_numElements )
 		{
-			if( _name == m_children[m_lastAccessed]->m_name )
-				return *m_children[m_lastAccessed];
+			if( _name == ((Node**)m_bufferArray)[m_lastAccessed]->m_name )
+				return *((Node**)m_bufferArray)[m_lastAccessed];
 			++m_lastAccessed;
 		}
 
 		// Not found -> create a new one (stable reaction and for write access)
-		++m_numElements;
-		m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
-		Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-		m_children[m_lastAccessed] = new (newNode) Node( m_file, _name );
-		return *newNode;
+		Resize(m_numElements + 1);
+		((Node**)m_bufferArray)[m_lastAccessed]->SetName( _name );
+		return *((Node**)m_bufferArray)[m_lastAccessed];
 	}
 
 	// ********************************************************************* //
@@ -583,42 +574,52 @@ namespace Files {
 			m_type = _type;
 		if( m_type != _type && _type != ElementType::UNKNOWN ) throw std::string("[Node::Reset] Reset cannot change the type of a node.");
 
-		m_lastAccessed = 0;
-		switch( m_type )
+		m_lastAccessed = m_lastAccessed >= _size ? 0 : m_lastAccessed;
+
+		uint64_t oldSize = ARRAY_SIZE(m_numElements, m_type);
+		uint64_t newSize = ARRAY_SIZE(_size, m_type);
+		// If both old and new are buffered nothing happens otherwise
+		// a realloc or copy is necessary
+		if( oldSize > sizeof(m_buffer) || newSize > sizeof(m_buffer) )
 		{
-		case ElementType::NODE: {
-			// Delete elements which are outside the range
-			for( uint64_t i=_size; i<m_numElements; ++i ) m_file->m_nodePool.Delete( m_children[i] );
-			// Resize
-			m_children = (Node**)realloc( m_children, size_t(_size * sizeof(Node*)) );
-			// If enlarged allocate more children
-			for( uint64_t i=m_numElements; i<_size; ++i )
-			{
-				Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-				m_children[i] = new (newNode) Node( m_file, "" );
-			}
-			} break;
-		case ElementType::STRING: {
-			std::string* oldBuffer = reinterpret_cast<std::string*>(m_bufferArray);
-			m_bufferArray = new std::string[size_t(_size)];
-			for( uint64_t i=0; i<std::min(m_numElements,_size); ++i )
-				reinterpret_cast<std::string*>(m_bufferArray)[i] = std::move(oldBuffer[i]);
-			delete[] oldBuffer;
-			} break;
-		default: {
-			uint64_t oldDataSize = (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
-			uint64_t dataSize = (_size * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
-			if( _size > 1 ) {
-				m_bufferArray = realloc( m_bufferArray, size_t(dataSize) );
-				// If there was one element before copy it to the new location
-				if( m_numElements == 1 ) memcpy( m_bufferArray, &m_buffer, size_t(oldDataSize) );
-			} else {
-				// Make first element unbuffered (_size is 1 or 0)
-				if(m_bufferArray) memcpy( &m_buffer, m_bufferArray, size_t(dataSize) );
-				free(m_bufferArray);
-				m_bufferArray = nullptr;
-			}
-			} break;
+			void* oldData = m_bufferArray;
+			uint64_t minNum = min(m_numElements, _size);
+			uint64_t maxNum = max(m_numElements, _size);
+
+			// Determine target memory
+			if( newSize <= sizeof(m_buffer) ) m_bufferArray = m_buffer;
+			else m_bufferArray = malloc( size_t(newSize) );
+
+			// Now (flat) copy the old data
+			if( m_type == ElementType::STRING )
+				for( uint64_t i=0; i<minNum; ++i )
+					new ((string*)m_bufferArray + i) string(std::move(((string*)oldData)[i]));
+			else
+				memcpy(m_bufferArray, oldData, (size_t)min(oldSize, newSize) );
+
+			if( oldSize > sizeof(m_buffer) ) free(oldData);
+		}
+
+		if( m_numElements < _size )
+		{
+			// Allocate new elements
+			if( m_type == ElementType::NODE )
+				for( uint64_t i=m_numElements; i<_size; ++i )
+				{
+					Node* newNode = (Node*)m_file->m_nodePool.Alloc();
+					((Node**)m_bufferArray)[i] = new (newNode) Node( m_file, "" );
+				}
+			else if( m_type == ElementType::STRING )
+				for( uint64_t i=m_numElements; i<_size; ++i )
+					new ((string*)m_bufferArray + i) string();
+		} else {
+			// Correctly delete pruned elements
+			if( m_type == ElementType::NODE )
+				for( uint64_t i=_size; i<m_numElements; ++i )
+					m_file->m_nodePool.Delete( ((Node**)m_bufferArray)[i] );
+			else if( m_type == ElementType::STRING )
+				for( uint64_t i=_size; i<m_numElements; ++i )
+					((string*)m_bufferArray)[i].~string();
 		}
 
 		m_numElements = _size;
@@ -632,31 +633,7 @@ namespace Files {
 
 		// In case of nodes there is no casting afterwards which dereferences
 		// the item. The child node must be returned immediately.
-		if( m_type == ElementType::NODE ) return *m_children[_index];
-
-		// Fast buffered element access
-		//if( m_lastAccessed == _index ) return *this;
-
-		// Load the primitive data into m_buffer
-		//if( ElementType::STRING ) 
-		/*switch( m_type )
-		{
-		case ElementType::STRING:
-			// Find start address in buffer and store it in m_buffer
-			m_buffer = reinterpret_cast<uint64_t>(&((std::string*)m_bufferArray)[_index]);
-			break;
-		case ElementType::BIT: m_buffer = (((uint32_t*)m_bufferArray)[_index/32] >> (_index & 0xf)) & 1; break;
-		case ElementType::INT8: *(int8_t*)&m_buffer = ((int8_t*)m_bufferArray)[_index]; break;
-		case ElementType::UINT8: *(uint8_t*)&m_buffer = ((uint8_t*)m_bufferArray)[_index]; break;
-		case ElementType::INT16: *(int16_t*)&m_buffer = ((int16_t*)m_bufferArray)[_index]; break;
-		case ElementType::UINT16: *(uint16_t*)&m_buffer = ((uint16_t*)m_bufferArray)[_index]; break;
-		case ElementType::INT32: *(int32_t*)&m_buffer = ((int32_t*)m_bufferArray)[_index]; break;
-		case ElementType::UINT32: *(uint32_t*)&m_buffer = ((uint32_t*)m_bufferArray)[_index]; break;
-		case ElementType::INT64: *(int64_t*)&m_buffer = ((int64_t*)m_bufferArray)[_index]; break;
-		case ElementType::UINT64: *(uint64_t*)&m_buffer = ((uint64_t*)m_bufferArray)[_index]; break;
-		case ElementType::FLOAT: *(float*)&m_buffer = ((float*)m_bufferArray)[_index]; break;
-		case ElementType::DOUBLE: *(double*)&m_buffer = ((double*)m_bufferArray)[_index]; break;
-		}*/
+		if( m_type == ElementType::NODE ) return *((Node**)m_bufferArray)[_index];
 
 		m_lastAccessed = _index;
 
@@ -679,7 +656,7 @@ namespace Files {
 
 		// In case of nodes there is no casting afterwards which dereferences
 		// the item. The child node must be returned immediately.
-		if( m_type == ElementType::NODE ) return *m_children[_index];
+		if( m_type == ElementType::NODE ) return *((Node**)m_bufferArray)[_index];
 
 		m_lastAccessed = _index;
 		return *this;
@@ -698,8 +675,6 @@ namespace Files {
 		if( m_type == ElementType::NODE ) throw "Cannot access data from intermediate node '" + m_name + "'";
 		if( m_type == ElementType::STRING ) throw "Cannot access data from string node '" + m_name + "'";
 
-		if( m_numElements == 1 )
-			return &m_buffer;
 		return m_bufferArray;
 	}
 
@@ -709,9 +684,7 @@ namespace Files {
 	{																		\
 		if( m_type == ElementType::UNKNOWN ) {m_type = ET; m_numElements = 1;}				\
 		if( TYPE_FAIL ) throw std::string("Cannot assign ") + #T + " to '" + m_name + "'";	\
-		if( m_numElements == 1 )											\
-			*reinterpret_cast<T*>(&m_buffer) = _val;						\
-		else reinterpret_cast<T*>(m_bufferArray)[m_lastAccessed] = _val;	\
+		reinterpret_cast<T*>(m_bufferArray)[m_lastAccessed] = _val;			\
 		return _val;														\
 	}
 
@@ -731,13 +704,10 @@ namespace Files {
 		if( m_type == ElementType::UNKNOWN ) {m_type = ElementType::BIT; m_numElements=1;}
 		if( ElementType::BIT != m_type ) throw std::string("Cannot assign bool to '" + m_name + "'");
 
-		if( m_numElements == 1 )
-			*reinterpret_cast<bool*>(&m_buffer) = _val;
-		else {
-			uint32_t& i = reinterpret_cast<uint32_t*>(m_bufferArray)[m_lastAccessed/32];
-			uint32_t m = 1 << (m_lastAccessed & 0xf);
-			i = (i & ~m) | (_val?m:0);
-		}
+		uint8_t& i = reinterpret_cast<uint8_t*>(m_bufferArray)[m_lastAccessed/8];
+		uint8_t m = 1 << (m_lastAccessed & 0x7);
+		i = (i & ~m) | (_val?m:0);
+
 		return _val;
 	}
 
@@ -746,12 +716,11 @@ namespace Files {
 		if( m_type == ElementType::UNKNOWN || m_numElements==0 ) {
 			m_type = ElementType::STRING;
 			m_numElements = 1;
-			m_bufferArray = new std::string[1];
+			new ((std::string*)m_bufferArray) string();
 		}
 		if( m_type != ElementType::STRING ) throw "Cannot assign std::string to '" + m_name + "'";
 
 		((std::string*)m_bufferArray)[m_lastAccessed] = _val;
-		//*reinterpret_cast<std::string*>(m_buffer) = _val;
 		return _val;
 	}
 
@@ -760,12 +729,11 @@ namespace Files {
 		if( m_type == ElementType::UNKNOWN || m_numElements==0 ) {
 			m_type = ElementType::STRING;
 			m_numElements = 1;
-			m_bufferArray = new std::string[1];
+			new ((std::string*)m_bufferArray) string();
 		}
 		if( m_type != ElementType::STRING ) throw "Cannot assign 'const char*' to '" + m_name + "'";
 
 		((std::string*)m_bufferArray)[m_lastAccessed] = _val;
-		//*reinterpret_cast<std::string*>(m_buffer) = _val;
 		return _val;
 	}
 
@@ -780,10 +748,9 @@ namespace Files {
 		m_type = ElementType::NODE;
 
 		// Add a new child
-		++m_numElements;
-		m_children = (Node**)realloc( m_children, size_t(m_numElements * sizeof(Node*)) );
-		Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-		m_children[m_numElements-1] = new (newNode) Node( m_file, _name );
+		Resize(m_numElements+1);
+		Node* newNode = ((Node**)m_bufferArray)[m_numElements-1];
+		newNode->SetName( _name );
 		if( _numElements )
 			newNode->Resize( _numElements, _type );
 		else {
@@ -806,8 +773,8 @@ namespace Files {
 		uint64_t m_lastAccessed = 0;
 		while( m_lastAccessed < m_numElements )
 		{
-			if( _name == m_children[m_lastAccessed]->m_name )
-				{ if(_child) *_child = &(*m_children[m_lastAccessed]); return true;}
+			if( _name == ((Node**)m_bufferArray)[m_lastAccessed]->m_name )
+				{ if(_child) *_child = &(*((Node**)m_bufferArray)[m_lastAccessed]); return true;}
 			++m_lastAccessed;
 		}
 		// Not found
@@ -831,13 +798,13 @@ namespace Files {
 		{
 			uint64_t dataSize = 0;
 			for( uint64_t i=0; i<m_numElements; ++i ) {
-				dataSize += m_children[i]->GetDataSize();
+				dataSize += ((Node**)m_bufferArray)[i]->GetDataSize();
 				// Names are always stored as STRING8
-				uint64_t length = m_children[i]->GetName().length();
+				uint64_t length = ((Node**)m_bufferArray)[i]->GetName().length();
 				dataSize += length + 1;
 				dataSize += 1;	// CodeNType
-				dataSize += uint64_t(1<<GetNumRequiredBytes(m_children[i]->Size()));	// NELEMS
-				if(m_children[i]->GetType() == ElementType::NODE || m_children[i]->GetType() == ElementType::STRING)
+				dataSize += uint64_t(1<<GetNumRequiredBytes(((Node**)m_bufferArray)[i]->Size()));	// NELEMS
+				if(((Node**)m_bufferArray)[i]->GetType() == ElementType::NODE || ((Node**)m_bufferArray)[i]->GetType() == ElementType::STRING)
 					dataSize += 8;	// Datasize
 			}
 			return dataSize;
@@ -857,8 +824,10 @@ namespace Files {
 			if(_stringSize) *_stringSize = numBytes;
 			return m_numElements * numBytes + lengthSum;
 		} else {
-			return (m_numElements * ELEMENT_TYPE_SIZE[(int)m_type] + 7) / 8;
+			return ARRAY_SIZE(m_numElements, m_type);
 		}
 	}
+
+#undef ARRAY_SIZE
 };
 };
