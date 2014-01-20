@@ -33,6 +33,10 @@ namespace Files {
 		};
 
 		virtual void Read( uint64_t _numBytes, void* _to ) const = 0;
+
+		/// \brief Read the next character from the file
+		virtual uint8_t Next() const = 0;
+
 		virtual void Write( const void* _from, uint64_t _numBytes ) = 0;
 		virtual void Seek( uint64_t _numBytes, SeekMode _mode = SeekMode::SET ) const = 0;
 

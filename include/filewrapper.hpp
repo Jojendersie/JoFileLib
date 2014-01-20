@@ -83,15 +83,11 @@ namespace Files {
 		class Node
 		{
 			MetaFileWrapper* m_file;
-			uint64_t m_numElements;
-			ElementType m_type;
-			union {
-				//Node** m_children;			
-				//uint64_t m_dataPosition;		///< Position within the file if not buffered
-				void* m_bufferArray;			///< Array data is buffered in its own memory block or m_buffer
-			};
+			void* m_bufferArray;				///< Array data is buffered in its own memory block or m_buffer
 			uint8_t m_buffer[64];				///< Primitive non-array data is buffered in that 8 bytes
 			mutable uint64_t m_lastAccessed;	///< Array index last used in ´operator[int]´ for optimizations
+			uint64_t m_numElements;				///< How many elements are in this array?
+			ElementType m_type;					///< Deduced type for this node.
 			std::string m_name;					///< Identifier of the node
 
 			void ParseJsonValue( const IFile& _file, char _fistNonWhite );	///< Recursive function to parse a value
@@ -134,10 +130,6 @@ namespace Files {
 			/// \brief Recursive destruction. Assumes all children in the NodePool.
 			///
 			~Node();
-
-			/// \brief Flat copy construction. The children are just ignored.
-			///
-			//Node( const Node& );
 
 			uint64_t Size() const				{ return m_numElements; }
 			std::string GetName() const			{ return m_name; }

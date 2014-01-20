@@ -42,6 +42,12 @@ namespace Files {
 		m_cursor += _numBytes;
 	}
 
+	uint8_t MemFile::Next() const
+	{
+		++m_cursor;
+		return ((uint8_t*)m_buffer)[m_cursor-1];
+	}
+
 	void MemFile::Write( const void* _from, uint64_t _numBytes )
 	{
 		if( !m_writeAccess ) throw std::string("No write access.");

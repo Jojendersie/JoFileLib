@@ -39,6 +39,7 @@ namespace Files {
 		~MemFile();
 
 		virtual void Read( uint64_t _numBytes, void* _to ) const override;
+		virtual uint8_t Next() const override;
 		virtual void Write( const void* _from, uint64_t _numBytes ) override;
 
 		/// \details Seek can even jump to locations > size for random write

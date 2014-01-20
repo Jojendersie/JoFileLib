@@ -12,6 +12,8 @@
 // when a memory leak appears.
 #endif
 
+#include <Windows.h>
+
 using namespace std;
 
 void TestPngLoad();
@@ -22,6 +24,21 @@ int main()
 #if defined(DEBUG) || defined(_DEBUG)
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+
+	// Benchmark of single byte read
+	/*{
+		Jo::Files::HDDFile file("D:/Studium/WiSe1213/Arbeit-rohdaten/data/HR_uv75_0030-5thday.nc");
+		char buf;
+		uint64_t start, end;
+		QueryPerformanceCounter( (LARGE_INTEGER*)&start );
+		while(!file.IsEof())
+		{
+			//file.Read(1, &buf);	// 19895168
+			buf = file.Next();		// 13073322
+		}
+		QueryPerformanceCounter( (LARGE_INTEGER*)&end );
+		std::cout << (end-start);
+	}//*/
 	
 	try {
 		// CREATE ********************************************

@@ -25,11 +25,11 @@ namespace Files {
 	{
 		char charBuffer;
 		if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
-		_file.Read( 1, &charBuffer );
+		charBuffer = _file.Next();
 		while( std::isspace(charBuffer) )
 		{
 			if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
-			_file.Read( 1, &charBuffer );
+			charBuffer = _file.Next();
 		}
 		return charBuffer;
 	}
@@ -43,7 +43,7 @@ namespace Files {
 			do {
 				previous = charBuffer;
 				if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
-				_file.Read( 1, &charBuffer );
+				charBuffer = _file.Next();
 				identifier += charBuffer;
 			} while( charBuffer != '"' );
 			// Found a ". It could be escaped -> repeat.
@@ -62,7 +62,7 @@ namespace Files {
 		do {
 			if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
 			// Read one character and append
-			_file.Read( 1, &charBuffer );
+			charBuffer = _file.Next();
 			number += charBuffer;
 			// It is a float!
 			if( charBuffer == '.' || charBuffer == 'e') _isFloat = true;
@@ -73,19 +73,6 @@ namespace Files {
 		_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
 		return number.c_str();
 	}
-
-	/*static MetaFileWrapper::ElementType DeduceType( char _char )
-	{
-		switch(_char) {
-		case '{': return MetaFileWrapper::ElementType::NODE;
-		case '"': return MetaFileWrapper::ElementType::STRING;
-		case '[': return MetaFileWrapper::ElementType::UNKNOWN;
-		case 't': return MetaFileWrapper::ElementType::BIT;
-		case 'f': return MetaFileWrapper::ElementType::BIT;
-		case 'n': return MetaFileWrapper::ElementType::NODE;
-		}
-		return MetaFileWrapper::ElementType::UNKNOWN;
-	}*/
 
 	// ********************************************************************* //
 	// Determine the minimum variable size to store the value in _iVal
@@ -199,19 +186,6 @@ namespace Files {
 	}
 
 	// ********************************************************************* //
-	// Flat copy construction. The children are just ignored.
-	/*MetaFileWrapper::Node::Node( const Node& _Node ) :
-		m_file( nullptr ),		// This show the destructor that the current node is a flat copy
-		m_numElements( _Node.m_numElements ),
-		m_type( _Node.m_type ),
-		m_bufferArray( _Node.m_bufferArray ),
-		m_buffer( _Node.m_buffer ),
-		m_lastAccessed( _Node.m_lastAccessed ),
-		m_name( _Node.m_name )
-	{
-	}*/
-
-	// ********************************************************************* //
 	void MetaFileWrapper::Node::Read( const IFile& _file, Format _format )
 	{
 		// Read in the first few bytes to test which format it is.
@@ -246,7 +220,6 @@ namespace Files {
 			break;
 		case '"':
 			// This is a string
-//			m_type = ElementType::STRING;
 			*this = ReadJsonIdentifier( _file );
 			break;
 		case '[':
@@ -256,13 +229,11 @@ namespace Files {
 		case 't':
 			// boolean value "true"
 			_file.Seek( 3, IFile::SeekMode::MOVE_FORWARD );
-//			m_type = ElementType::BIT;
 			*this = true;
 			break;
 		case 'f':
 			// boolean value "false"
 			_file.Seek( 4, IFile::SeekMode::MOVE_FORWARD );
-//			m_type = ElementType::BIT;
 			*this = false;
 			break;
 		case 'n':
@@ -275,15 +246,12 @@ namespace Files {
 		if( _fistNonWhite >= '0' && _fistNonWhite <= '9' )
 		{
 			// Parse number
-		//	_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
 			bool isFloat;
 			std::string number = _fistNonWhite + ReadJsonNumber( _file, isFloat );
 			if( isFloat ) {
-				//m_type = ElementType::DOUBLE;
 				*this = atof(number.c_str());
 			}
 			else {
-				//m_type = ElementType::INT32;
 				*this = atoi(number.c_str());
 			}
 		}
@@ -351,8 +319,7 @@ namespace Files {
 	void MetaFileWrapper::Node::ReadSraw( const IFile& _file )
 	{
 		// The first byte has CODE ELEM_TYPE nibbles
-		uint8_t codeNType;
-		_file.Read( 1, &codeNType );
+		uint8_t codeNType = _file.Next();
 		m_type = (ElementType)(codeNType & 0xf);
 
 		// Map all STRINGxx types to STRING but remember the size for ReadString.
@@ -444,8 +411,6 @@ namespace Files {
 			int subIndent = 0;
 			// This is a child node of an array -> Array of value-arrays
 			bool isArray = (m_name == "") || ( m_numElements != 1 );
-//			if( m_numElements > 1 ) { _file.Write( "[\n", 2 ); subIndent = _indent + 1; }
-			//if( m_numElements == 0 ) { _file.Write( "[", 1 ); }
 			if(isArray) _file.Write( "[", 1 );
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
@@ -464,7 +429,6 @@ namespace Files {
 				case ElementType::UINT64:	buffer = std::to_string( uint64_t((*this)[i]) );		break;
 				case ElementType::STRING:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
 				}
-				//for( int j=0; j<subIndent; ++j ) _file.Write( " ", 1 );
 				_file.Write( buffer.c_str(), buffer.length() );
 				if( i+1 < m_numElements ) _file.Write( ", ", 2 );
 			}

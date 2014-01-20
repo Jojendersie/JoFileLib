@@ -40,6 +40,7 @@ namespace Files {
 		~HDDFile();
 
 		virtual void Read( uint64_t _numBytes, void* _to ) const override;
+		virtual uint8_t Next() const override;
 		virtual void Write( const void* _from, uint64_t _numBytes ) override;
 
 		/// \details Seek can only jump within the existing file.

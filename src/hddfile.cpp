@@ -1,6 +1,7 @@
 #include "hddfile.hpp"
 #include "fileutils.hpp"
 #include <algorithm>
+#include <assert.h>
 
 namespace Jo {
 namespace Files {
@@ -57,11 +58,22 @@ namespace Files {
 
 	void HDDFile::Read( uint64_t _numBytes, void* _to ) const
 	{
+#ifdef _DEBUG
 		if( !m_readAccess ) throw std::string("No read access.");
+#endif
 
 		// Just read there cannot be any pending write
 		fread( _to, size_t(_numBytes), 1, m_file );
 		m_cursor += _numBytes;
+	}
+
+	uint8_t HDDFile::Next() const
+	{
+#ifdef _DEBUG
+		if( !m_readAccess ) throw std::string("No read access.");
+#endif
+		++m_cursor;
+		return fgetc( m_file );
 	}
 
 	void HDDFile::Write( const void* _from, uint64_t _numBytes )
