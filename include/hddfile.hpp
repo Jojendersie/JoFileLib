@@ -24,6 +24,7 @@ namespace Files {
 		enum ModeFlags {
 			CREATE_FILE = 1,	///< Create the file if not existent. This includes the path.
 			APPEND = 2,			///< Set cursor to the end of file (standard is at the beginning)
+			OVERWRITE = 4,		///< Clear the file on opening
 		};
 
 		/// \brief Open a file on hard disk.
@@ -37,7 +38,13 @@ namespace Files {
 		///		the default buffer size is 4KB.
 		HDDFile( const std::string& _name, ModeFlags _flags = ModeFlags(0), int _bufferSize = 4096 );
 
+		/// \brief Move construction
+		HDDFile(HDDFile&& _file);
+
 		~HDDFile();
+
+		/// \brief Close the old file and take the new reference.
+		const HDDFile& operator = (HDDFile&& _file);
 
 		virtual void Read( uint64_t _numBytes, void* _to ) const override;
 		virtual uint8_t Next() const override;
@@ -48,6 +55,11 @@ namespace Files {
 
 		/// \brief Write the buffer to disk if there are written bytes pending.
 		void Flush();
+
+	private:
+		// Copying files not allowed.
+		void operator = (const HDDFile&);
+		HDDFile(const HDDFile&);
 	};
 };
 };

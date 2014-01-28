@@ -162,7 +162,9 @@ namespace Files {
 		m_lastAccessed( 0 ),
 		m_name("")
 	{
-		Read( _file, _format );
+		// Ignore empty files
+		if( !_file.IsEof() )
+			Read( _file, _format );
 	}
 
 	// ********************************************************************* //
@@ -194,12 +196,14 @@ namespace Files {
 		if( _format == Format::AUTO_DETECT )
 		{
 			_format = Format::SRAW;	// Default if nothing else can be detected
-			char charBuffer = FindFirstNonWhitespace(_file);
-			if( charBuffer == '{' ) {
-				charBuffer = FindFirstNonWhitespace(_file);
-				if( charBuffer == '}' || charBuffer == '"' )
-					_format = Format::JSON;
-			}
+			try {
+				char charBuffer = FindFirstNonWhitespace(_file);
+				if( charBuffer == '{' ) {
+					charBuffer = FindFirstNonWhitespace(_file);
+					if( charBuffer == '}' || charBuffer == '"' )
+						_format = Format::JSON;
+				}
+			} catch(...) {}
 			// Let the parser see everything
 			_file.Seek( 0 );
 		}
@@ -243,7 +247,7 @@ namespace Files {
 		}
 
 		// Check for number types
-		if( _fistNonWhite >= '0' && _fistNonWhite <= '9' )
+		if( _fistNonWhite >= '0' && _fistNonWhite <= '9' || _fistNonWhite == '-' )
 		{
 			// Parse number
 			bool isFloat;

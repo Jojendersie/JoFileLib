@@ -9,7 +9,7 @@ namespace Files {
 	HDDFile::HDDFile( const std::string& _name, ModeFlags _flags, int _bufferSize ) :
 		IFile(0, true, true), m_pendingWriteBytes(0)
 	{
-		const char* modeStr = "r+b";
+		const char* modeStr = (_flags & OVERWRITE) ? "w+b" : "r+b";
 
 		m_file = fopen( _name.c_str(), modeStr );
 
@@ -29,7 +29,7 @@ namespace Files {
 		}
 
 		// Retry with read only (permissions?)
-		if(!m_file)
+		if(!m_file && !(_flags & OVERWRITE))
 		{
 			m_writeAccess = false;
 			modeStr = "rb";
@@ -49,11 +49,32 @@ namespace Files {
 			fseek( m_file, 0, SEEK_SET );
 	}
 
+	HDDFile::HDDFile(HDDFile&& _file) :
+		IFile(_file),
+		m_pendingWriteBytes(_file.m_pendingWriteBytes),
+		m_file(_file.m_file)
+	{
+		_file.m_file = nullptr;
+	}
+
 	HDDFile::~HDDFile()
 	{
 		// Release resources
-		fflush( m_file );
-		fclose( m_file );
+		if( m_file )
+		{
+			fflush( m_file );
+			fclose( m_file );
+		}
+	}
+
+	const HDDFile& HDDFile::operator = (HDDFile&& _file)
+	{
+		// Close old file
+		this->~HDDFile();
+		// Take new by move construction
+		new (this) HDDFile(std::move(_file));
+
+		return *this;
 	}
 
 	void HDDFile::Read( uint64_t _numBytes, void* _to ) const

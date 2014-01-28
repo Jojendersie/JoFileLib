@@ -22,11 +22,30 @@ namespace Files {
 		m_capacity = _capacity;
 	}
 
+	MemFile::MemFile( MemFile&& _file ) :
+		IFile( _file ),
+		m_buffer( _file.m_buffer ),
+		m_capacity( _file.m_capacity ),
+		m_ownsMemory( _file.m_ownsMemory )
+	{
+		_file.m_buffer = nullptr;
+		_file.m_ownsMemory = false;
+	}
+
 	MemFile::~MemFile()
 	{
 		if( m_ownsMemory ) free( m_buffer );
 		m_buffer = nullptr;
 		m_capacity = 0;
+	}
+
+	const MemFile& MemFile::operator = ( MemFile&& _file )
+	{
+		// Avoid memory leak
+		this->~MemFile();
+
+		new (this) MemFile(std::move(_file));
+		return *this;
 	}
 
 	void MemFile::Read( uint64_t _numBytes, void* _to ) const
