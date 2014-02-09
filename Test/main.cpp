@@ -18,12 +18,14 @@ using namespace std;
 
 void TestPngLoad();
 void TestRndAccessHDDFile();
+void TestStreamReader();
 
 int main()
 {
 #if defined(DEBUG) || defined(_DEBUG)
 	_CrtSetDbgFlag( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+	TestStreamReader();
 
 	// Benchmark of single byte read
 	/*{

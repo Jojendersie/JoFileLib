@@ -99,6 +99,9 @@
     <ClInclude Include="dependencies\libpng166\pngdebug.h">
       <Filter>libpng</Filter>
     </ClInclude>
+    <ClInclude Include="include\streamreader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\filewrapper.cpp">
@@ -210,6 +213,12 @@
       <Filter>libpng</Filter>
     </ClCompile>
     <ClCompile Include="src\fileutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\imagewrapper_pfm.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\streamreader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

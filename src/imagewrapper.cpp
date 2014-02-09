@@ -13,6 +13,7 @@ namespace Files {
 		switch(_format)
 		{
 		case Format::PNG: ReadPNG( _file ); break;
+		case Format::PFM: ReadPFM( _file ); break;
 		default:
 			assert(false);
 			throw std::string("[ImageWrapper::ImageWrapper] Cannot open non-image format.");
@@ -26,8 +27,10 @@ namespace Files {
 		m_bitDepth(_bitDepth),
 		m_channelType(_type)
 	{
+		if( _type == ChannelType::FLOAT )
+			m_bitDepth = 32;
 		// Round up in case the last byte is not filled completely.
-		m_buffer = (uint8_t*)malloc( (_width * _height * _numChannels * _bitDepth + 7) / 8 );
+		m_buffer = (uint8_t*)malloc( (m_width * m_height * m_numChannels * m_bitDepth + 7) / 8 );
 	}
 
 	ImageWrapper::~ImageWrapper()
@@ -42,6 +45,7 @@ namespace Files {
 		switch(_format)
 		{
 		case Format::PNG: WritePNG( _file ); break;
+		case Format::PFM: WritePFM( _file ); break;
 		default:
 			assert(false);
 			throw std::string("[ImageWrapper::Write] Target format not supported.");

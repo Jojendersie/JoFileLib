@@ -55,7 +55,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>_CRTDBG_MAP_ALLOC;WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;_CRTDBG_MAP_ALLOC;WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -78,7 +78,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
       <DisableSpecificWarnings>4290</DisableSpecificWarnings>
-      <PreprocessorDefinitions>WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NOMINMAX;WINAPI_FAMILY;_CRT_SECURE_NO_WARNINGS;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
@@ -122,6 +122,7 @@
     <ClInclude Include="include\jofilelib.hpp" />
     <ClInclude Include="include\memfile.hpp" />
     <ClInclude Include="include\plattform.hpp" />
+    <ClInclude Include="include\streamreader.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dependencies\libpng166\png.c" />
@@ -159,8 +160,10 @@
     <ClCompile Include="src\filewrapper.cpp" />
     <ClCompile Include="src\hddfile.cpp" />
     <ClCompile Include="src\imagewrapper.cpp" />
+    <ClCompile Include="src\imagewrapper_pfm.cpp" />
     <ClCompile Include="src\imagewrapper_png.cpp" />
     <ClCompile Include="src\memfile.cpp" />
+    <ClCompile Include="src\streamreader.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
