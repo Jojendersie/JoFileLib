@@ -1,4 +1,5 @@
 ### General Development Files and Directories ###
+dependencies/
 Debug/
 Release/
 ipch/

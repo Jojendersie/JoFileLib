@@ -355,8 +355,6 @@ namespace Files {
 			// Recursive read (file cursor is at the correct position).
 			for( uint64_t i=0; i<m_numElements; ++i )
 			{
-				Node* newNode = (Node*)m_file->m_nodePool.Alloc();
-				((Node**)m_bufferArray)[i] = new (newNode) Node( m_file, "" );
 				((Node**)m_bufferArray)[i]->ReadSraw( _file );
 			}
 		} else {
