@@ -59,6 +59,19 @@ namespace Utils {
 		struct stat buf;
 		return 0 == stat( _name.c_str(), &buf );
 	}
+
+	// ********************************************************************* //
+	// Compare paths/files if they are equal.
+	bool IsEqual( const std::string& _name0, const std::string& _name1 )
+	{
+		// Compare the stat structs of both files
+		struct stat buf0;
+		struct stat buf1;
+		if( stat( _name0.c_str(), &buf0 ) != 0 ) return false;
+		if( stat( _name1.c_str(), &buf1 ) != 0 ) return false;
+
+		return buf0.st_dev == buf1.st_dev && buf0.st_ino == buf1.st_ino;
+	}
 };
 };
 };

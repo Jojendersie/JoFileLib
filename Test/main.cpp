@@ -19,6 +19,7 @@ using namespace std;
 void TestPngLoad();
 void TestRndAccessHDDFile();
 void TestStreamReader();
+void TestUtilities();
 
 int main()
 {
@@ -27,6 +28,7 @@ int main()
 	//_CrtSetBreakAlloc( 449 );
 #endif
 
+	TestUtilities();
 	//TestStreamReader();
 
 	// Benchmark of single byte read
