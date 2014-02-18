@@ -61,8 +61,8 @@ namespace Utils {
 	/// \details You can compare different formated inputs as relative or
 	///		absolute paths.
 	///		
-	///		If the file does not exisits the return value is false.
-	bool IsEqual( const std::string& _name0, const std::string& _name1 );
+	///		If the file does not exists the return value is false.
+	bool IsEqual( std::string _name0, std::string _name1 );
 
 
 	// Not implemented:

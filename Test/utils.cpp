@@ -12,4 +12,5 @@ void TestUtilities()
 	assert( IsEqual( "utils.cpp", "utils.cpp" ) );
 	assert( IsEqual( "utils.cpp", "../Test/utils.cpp" ) );
 	assert( IsEqual( "debug", "Debug" ) );
+	assert( IsEqual( "Debug/", "Debug" ) );
 }

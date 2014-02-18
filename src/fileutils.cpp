@@ -62,8 +62,28 @@ namespace Utils {
 
 	// ********************************************************************* //
 	// Compare paths/files if they are equal.
-	bool IsEqual( const std::string& _name0, const std::string& _name1 )
+	bool IsEqual( std::string _name0, std::string _name1 )
 	{
+		if( _name0.empty() || _name1.empty() ) return false;
+
+		// Remove / or \ at the end
+		bool check = true;
+		while( check )
+		{
+			if( _name0.back() == '/' ) _name0.pop_back();
+			else if( _name0.back() == '\\' ) _name0.pop_back();
+			else check = false;		// Found some non-slash
+			if( _name0.empty() ) return false;
+		}
+		check = true;
+		while( check )
+		{
+			if( _name1.back() == '/' ) _name1.pop_back();
+			else if( _name1.back() == '\\' ) _name1.pop_back();
+			else check = false;		// Found some non-slash
+			if( _name1.empty() ) return false;
+		}
+
 		// Compare the stat structs of both files
 		struct stat buf0;
 		struct stat buf1;
