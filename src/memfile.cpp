@@ -69,20 +69,28 @@ namespace Files {
 
 	void MemFile::Write( const void* _from, uint64_t _numBytes )
 	{
+		memcpy( Reserve(_numBytes), _from, size_t(_numBytes) );
+	}
+
+	void* MemFile::Reserve( uint64_t _numBytes )
+	{
 		if( !m_writeAccess ) throw std::string("No write access.");
 
 		// Resize memory
 		if( m_cursor + _numBytes > m_capacity )
 		{
-			// Increase to 2x or await more writes of the current size.
+			// Increase to 2x or expect more writes of the current size.
 			m_capacity = std::max( m_cursor + _numBytes * 2, m_capacity*2 );
 			m_buffer = realloc( m_buffer, size_t(m_capacity) );
 		}
 
-		memcpy( (uint8_t*)m_buffer + m_cursor, _from, size_t(_numBytes) );
+		void* address = (uint8_t*)m_buffer + m_cursor;
+
 		m_cursor += _numBytes;
 		// The write could be some where in the middle through seek.
 		m_size = std::max( m_size, m_cursor );
+
+		return address;
 	}
 
 	void MemFile::Seek( uint64_t _numBytes, SeekMode _mode ) const
