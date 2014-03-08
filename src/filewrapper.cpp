@@ -372,6 +372,186 @@ namespace Files {
 
 
 	// ********************************************************************* //
+	float MetaFileWrapper::Node::Get( float _default ) const
+	{
+		switch(m_type)
+		{
+		case ElementType::FLOAT:
+			return (float)*this;
+		case ElementType::DOUBLE:
+			return float((double)*this);
+		default:
+			return _default;
+		}
+	}
+
+	double MetaFileWrapper::Node::Get( double _default ) const
+	{
+		switch(m_type)
+		{
+		case ElementType::FLOAT:
+			return (float)*this;
+		case ElementType::DOUBLE:
+			return (double)*this;
+		default:
+			return _default;
+		}
+	}
+
+	int8_t MetaFileWrapper::Node::Get( int8_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return int8_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return int8_t((uint8_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	uint8_t MetaFileWrapper::Node::Get( uint8_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return uint8_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return uint8_t((uint8_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	int16_t MetaFileWrapper::Node::Get( int16_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return int16_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return int16_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return int16_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return int16_t((uint16_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	uint16_t MetaFileWrapper::Node::Get( uint16_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return uint16_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return uint16_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return uint16_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return uint16_t((uint16_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	int32_t MetaFileWrapper::Node::Get( int32_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return int32_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return int32_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT32:
+			return int32_t((int32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return int32_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return int32_t((uint16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT32:
+			return int32_t((uint32_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	uint32_t MetaFileWrapper::Node::Get( uint32_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return uint32_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return uint32_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT32:
+			return uint32_t((int32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return uint32_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return uint32_t((uint16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT32:
+			return uint32_t((uint32_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	int64_t MetaFileWrapper::Node::Get( int64_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return int64_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return int64_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT32:
+			return int64_t((int32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT64:
+			return int64_t((int64_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return int64_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return int64_t((uint16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT32:
+			return int64_t((uint32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT64:
+			return int64_t((uint64_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+	uint64_t MetaFileWrapper::Node::Get( uint64_t _default ) const
+	{
+		switch(m_type)
+		{
+		case Jo::Files::MetaFileWrapper::ElementType::INT8:
+			return uint64_t((int8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT16:
+			return uint64_t((int16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT32:
+			return uint64_t((int32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::INT64:
+			return uint64_t((int64_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT8:
+			return uint64_t((uint8_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT16:
+			return uint64_t((uint16_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT32:
+			return uint64_t((uint32_t)*this);
+		case Jo::Files::MetaFileWrapper::ElementType::UINT64:
+			return uint64_t((uint64_t)*this);
+		default:
+			return _default;
+		}
+	}
+
+
+	// ********************************************************************* //
 	void MetaFileWrapper::Node::SaveAsJson( IFile& _file, int _indent ) const
 	{
 		// Do not save unknown garbage
