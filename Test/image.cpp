@@ -4,6 +4,7 @@ using namespace std;
 
 void TestPngLoad()
 {
+
 	try {
 		std::cout << "\n******* png loader test *******\n";
 		// Load a png file without interlacing

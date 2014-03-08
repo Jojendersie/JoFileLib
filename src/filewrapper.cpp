@@ -254,9 +254,9 @@ namespace Files {
 			std::string number = _fistNonWhite + ReadJsonNumber( _file, isFloat );
 			if( isFloat ) {
 				*this = atof(number.c_str());
-			}
-			else {
-				*this = atoi(number.c_str());
+			} else {
+				// Using strtoul allows reading numbers like 0xffffffff
+				*this = (int)strtoul(number.c_str(), nullptr, 0);
 			}
 		}
 	}
