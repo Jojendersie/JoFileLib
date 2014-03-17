@@ -17,6 +17,7 @@ namespace Utils {
 		};
 		std::vector<FileDesc>		m_files;
 		std::vector<std::string>	m_directories;
+		std::string					m_currentDirectory;
 	public:
 		/// \brief Reads all filenames form the given directory.
 		/// \details All the names are buffered so deletions or creations of
@@ -40,7 +41,7 @@ namespace Utils {
 
 		/// \brief Returns the name of the directory whose content is enumerated.
 		///
-		const std::string& GetCurrentDirectoryName() const;
+		const std::string& GetCurrentDirectoryName() const			{ return m_currentDirectory; }
 	};
 
 	/// \brief Splits a given path name into directory and file.

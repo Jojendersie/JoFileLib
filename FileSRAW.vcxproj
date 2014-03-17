@@ -156,6 +156,7 @@
     <ClCompile Include="dependencies\zlib128\uncompr.c" />
     <ClCompile Include="dependencies\zlib128\zutil.c" />
     <ClCompile Include="src\fileutils.cpp" />
+    <ClCompile Include="src\fileutils_unix.cpp" />
     <ClCompile Include="src\fileutils_win.cpp" />
     <ClCompile Include="src\filewrapper.cpp" />
     <ClCompile Include="src\hddfile.cpp" />

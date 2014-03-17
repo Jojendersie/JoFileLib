@@ -19,6 +19,7 @@ namespace Utils {
 		m_files.clear();
 
 		DIR* directory = opendir(_directory.c_str());
+		m_currentDirectory = _directory;
 
 		if( !directory ) throw std::string("Cannot open '" + _directory + "' as directory for enumeration.");
 

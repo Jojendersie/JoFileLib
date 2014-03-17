@@ -26,6 +26,7 @@ namespace Utils {
 		m_directories.clear();
 		m_files.clear();
 
+		m_currentDirectory = _directory;
 		HANDLE handle;
 		WIN32_FIND_DATA data;
  
