@@ -133,5 +133,6 @@ namespace Files {
 		}
 		return 0.0f;
 	}
-};
-};
+
+} // namespace Files
+} // namespace Jo

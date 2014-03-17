@@ -5,10 +5,21 @@
 #ifdef JO_UNIX
 
 #include <dirent.h>
+#include <sys/stat.h>
 
 namespace Jo {
 namespace Files {
 namespace Utils {
+
+	// ********************************************************************* //
+	// Create a directory. The name should not contain a file name.
+	void MakeDir( const std::string& _name )
+	{
+		// Read/write/search permissions for owner and group, and with
+		// read/search permissions for others.
+		mkdir(_name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+	}
+
 
 	// ********************************************************************* //
 	// Refreshes the lists of names.
@@ -27,12 +38,12 @@ namespace Utils {
 		while( entry != nullptr )
 		{
 			// Skip ".", ".." and empty names
-			if( (entry->d_namelen > 0) !( (entry->d_name[0]=='.') && ( (entry->d_name[1]=='.' && entry->d_namelen==2) || entry->d_namelen==1 ) ))
+			if( (entry->d_name[0] != 0) && !( (entry->d_name[0]=='.') && ( (entry->d_name[1]=='.' && entry->d_name[2]==0) || entry->d_name[1]==0 ) ))
 			{
 				struct stat state;
 				std::string path = _directory + '/' + entry->d_name;
 				stat(path.c_str(), &state);
-				if( S_ISDIR(file->state.st_mode) )
+				if( S_ISDIR(state.st_mode) )
 				{
 					m_directories.push_back( entry->d_name );
 				} else {
@@ -54,8 +65,8 @@ namespace Utils {
 		std::sort( m_files.begin(), m_files.end(), [](const FileDesc& a, const FileDesc& b){ return a.name<b.name; } );
 	}
 
-};
-};
-};
+} // namespace Utils
+} // namespace Files
+} // namespace Jo
 
 #endif

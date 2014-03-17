@@ -1,6 +1,6 @@
+#include "plattform.hpp"
 #include "fileutils.hpp"
 #include <algorithm>
-#include <direct.h>
 #include <sys/stat.h>
 
 namespace Jo {
@@ -43,13 +43,6 @@ namespace Utils {
 		if(slashPosition != std::string::npos)
 			return name.substr(0, slashPosition+1);
 		else return std::string("");
-	}
-
-	// ********************************************************************* //
-	// Create a directory. The name should not contain a file name.
-	void MakeDir( const std::string& _name )
-	{
-		_mkdir(_name.c_str());
 	}
 
 	// ********************************************************************* //
@@ -103,6 +96,7 @@ namespace Utils {
 	{
 		Reset( _directory );
 	}
-};
-};
-};
+
+} // namespace Utils
+} // namespace Files
+} // namespace Jo

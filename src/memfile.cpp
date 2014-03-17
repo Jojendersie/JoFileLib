@@ -1,4 +1,5 @@
 #include "memfile.hpp"
+#include <cstring>	// memcpy
 #include <string>
 
 namespace Jo {
@@ -113,5 +114,5 @@ namespace Files {
 		}
 	}
 
-};
-};
+} // namespace Files
+} // namespace Jo

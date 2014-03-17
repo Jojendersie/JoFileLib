@@ -70,6 +70,6 @@ namespace Files {
 		// Write the data just as it is (endianness is not our concern)
 		_file.Write(m_buffer, m_width * m_height * m_numChannels * sizeof(float));
 	}
-};
-};
 
+} // namespace Files
+} // namespace Jo

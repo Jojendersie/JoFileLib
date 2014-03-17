@@ -1,5 +1,6 @@
 
 #include <cctype>
+#include <cmath>
 
 #include "streamreader.hpp"
 #include "hybridarray.hpp"

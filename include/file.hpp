@@ -21,7 +21,7 @@ namespace Files {
 		bool m_readAccess;
 
 		IFile( uint64_t _size, bool _read, bool _write ) :
-			m_size( _size ), m_cursor( 0 ), m_readAccess( _read ), m_writeAccess( _write )
+			m_size( _size ), m_cursor( 0 ), m_writeAccess( _write ), m_readAccess( _read )
 		{}
 	public:
 
@@ -83,5 +83,6 @@ namespace Files {
 		/// \brief Write a single word to the file. This does not write the string's length to the file.
 		void Write( const std::string& _what )		{ Write(_what.c_str(), _what.length()); }
 	};
-};
-};
+
+} // namespace Files
+} // namespace Jo

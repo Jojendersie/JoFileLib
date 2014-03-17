@@ -78,6 +78,6 @@ namespace Utils {
 	/// \brief Returns the file name without the directory
 	/// \param [in] _name Arbitrary file name.
 	std::string GetFileName( const std::string& _name );*/
-};
-};
-};
+} // namespace Utils
+} // namespace Files
+} // namespace Jo

@@ -10,13 +10,21 @@
 #undef WINAPI_FAMILY
 #define WINAPI_FAMILY WINAPI_FAMILY_DESKTOP_APP
 #include <windows.h>
-//#include <direct.h>
+#include <direct.h>
 //#include <io.h>
 
 
 namespace Jo {
 namespace Files {
 namespace Utils {
+
+	// ********************************************************************* //
+	// Create a directory. The name should not contain a file name.
+	void MakeDir( const std::string& _name )
+	{
+		_mkdir(_name.c_str());
+	}
+
 
 	// ********************************************************************* //
 	// Refreshes the lists of names.
@@ -92,8 +100,8 @@ namespace Utils {
 	{
 	}*/
 
-};
-};
-};
+} // namespace Utils
+} // namespace Files
+} // namespace Jo
 
 #endif

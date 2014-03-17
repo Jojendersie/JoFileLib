@@ -131,5 +131,5 @@ namespace Files {
 		fflush( m_file );
 	}
 
-};
-};
+} // namespace Files
+} // namespace Jo

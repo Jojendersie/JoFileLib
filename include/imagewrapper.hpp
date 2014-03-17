@@ -97,5 +97,6 @@ namespace Files {
 		/// \brief Write a portable float map
 		void WritePFM( IFile& _file ) const;
 	};
-}
-}
+
+} // namespace Files
+} // namespace Jo

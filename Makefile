@@ -1,18 +1,21 @@
 include config.mk
--include *.dep
+-include $(BUILDDIR)*.dep
 
 default: library
 
-library: jofile.a
+library: jofilelib_a
+
+INC = -I$(CURDIR)/include/ -I$(CURDIR)/../JoMemory/include/
+BUILDDIR = $(CURDIR)/make/
 
 # NOTE: GNU Make defines the rule below implicitly.
 #	   -- It would be nicer to put the dependency options here! --
-%.o: src/%.cpp
-	- $(CXX) -c $(CF) $(CXXFLAGS) $< -o $@
+$(BUILDDIR)%.o: src/%.cpp
+	- $(CXX) $(INC) -c $(CF) $(CXXFLAGS) $< -o $@
 
 # NOTE: we are listing only the objects here that do not make
 #		become executables (as, e.g., test_jofile.o)
-OBJ = fileutils.o fileutils_unix.o fileutils_win.o filewrapper.o hddfile.o imagewrapper.o imagewrapper_pfm.o imagewrapper_png.o memfile.o streamreader.o
+OBJ = $(BUILDDIR)fileutils.o $(BUILDDIR)fileutils_unix.o $(BUILDDIR)fileutils_win.o $(BUILDDIR)filewrapper.o $(BUILDDIR)hddfile.o $(BUILDDIR)imagewrapper.o $(BUILDDIR)imagewrapper_pfm.o $(BUILDDIR)imagewrapper_png.o $(BUILDDIR)memfile.o $(BUILDDIR)streamreader.o
 
 LIB = -lrt
 
@@ -20,15 +23,15 @@ LIB = -lrt
 #
 # LIB =
 
-jofile.a: $(OBJ)
-	- $(ARCHIVE) jofile.a $(OBJ)
-	- $(RANLIB) jofile.a
+jofilelib_a: $(OBJ)
+	- ar cru jofilelib.a $(OBJ)
+	- ranlib jofilelib.a
 	
-jofile.so: $(OBJ)
+jofilelib_so: $(OBJ)
 	- $(CXX) -shared -o $@ $^
 	
 test_jofile: $(OBJ) test_jofile.o
-	- $(CXX) $(CF) $(CXXFLAGS) -o test_jofile test_jofile.o $(OBJ) $(LIB)
+	- $(CXX) $(CF) $(CXXFLAGS) -o test_jofile test_jofile.o $(OBJ) $(LIB) $(INC)
   
 # run "test"
 test: test_jofile 

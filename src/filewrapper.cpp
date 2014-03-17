@@ -2,6 +2,7 @@
 #include "file.hpp"
 #include "filewrapper.hpp"
 #include <cctype>
+#include <cstring>	// memcpy
 #include <string>
 using namespace std; 
 
@@ -12,7 +13,7 @@ namespace Files {
 	static int NELEM_SIZE(uint8_t _code) { return 1<<((_code & 0x30)>>4); }
 
 	/// \brief Calculate the space required by the bufferArray
-#define ARRAY_SIZE(n,T)		(((n) * MetaFileWrapper::ELEMENT_TYPE_SIZE[(int)(T)] + 7) / 8)
+#	define ARRAY_SIZE(n,T)		(((n) * MetaFileWrapper::ELEMENT_TYPE_SIZE[(int)(T)] + 7) / 8)
 
 
 	MetaFileWrapper::Node MetaFileWrapper::Node::UndefinedNode( nullptr, std::string() );
@@ -36,7 +37,6 @@ namespace Files {
 	static std::string ReadJsonIdentifier( const IFile& _file )
 	{
 		std::string identifier("");
-		int index = 0;
 		char previous;
 		do {
 			char charBuffer = 0;
@@ -57,7 +57,6 @@ namespace Files {
 		// Assume integer numbers
 		_isFloat = false;
 		std::string number("");
-		int index = 0;
 		char charBuffer = 0;
 		do {
 			if( _file.IsEof() ) throw std::string("Syntax error in json file. Unexpected end of file.");
@@ -145,10 +144,10 @@ namespace Files {
 	// ********************************************************************* //
 	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const std::string& _name ) :
 		m_file( _wrapper ),
-		m_numElements( 0 ),
-		m_type( ElementType::UNKNOWN ),
 		m_bufferArray( m_buffer ),
 		m_lastAccessed( 0 ),
+		m_numElements( 0 ),
+		m_type( ElementType::UNKNOWN ),
 		m_name( _name )
 	{
 	}
@@ -156,10 +155,10 @@ namespace Files {
 	// ********************************************************************* //
 	MetaFileWrapper::Node::Node( MetaFileWrapper* _wrapper, const IFile& _file, Format _format ) :
 		m_file( _wrapper ),
-		m_numElements( 0 ),
-		m_type( ElementType::UNKNOWN ),
 		m_bufferArray( m_buffer ),
 		m_lastAccessed( 0 ),
+		m_numElements( 0 ),
+		m_type( ElementType::UNKNOWN ),
 		m_name("")
 	{
 		// Ignore empty files
@@ -247,7 +246,7 @@ namespace Files {
 		}
 
 		// Check for number types
-		if( _fistNonWhite >= '0' && _fistNonWhite <= '9' || _fistNonWhite == '-' )
+		if( (_fistNonWhite >= '0' && _fistNonWhite <= '9') || _fistNonWhite == '-' )
 		{
 			// Parse number
 			bool isFloat;
@@ -590,7 +589,6 @@ namespace Files {
 			// Now data is coming
 			// If there is more than one element add array syntax []
 			// Also use [] for empty data arrays.
-			int subIndent = 0;
 			// This is a child node of an array -> Array of value-arrays
 			bool isArray = (m_name == "") || ( m_numElements != 1 );
 			if(isArray) _file.Write( "[", 1 );
@@ -610,6 +608,7 @@ namespace Files {
 				case ElementType::UINT32:	buffer = std::to_string( uint32_t((*this)[i]) );		break;
 				case ElementType::UINT64:	buffer = std::to_string( uint64_t((*this)[i]) );		break;
 				case ElementType::STRING:	buffer = '\"' + (std::string)((*this)[i]) + '\"';		break;
+				default: break;
 				}
 				_file.Write( buffer.c_str(), buffer.length() );
 				if( i+1 < m_numElements ) _file.Write( ", ", 2 );
@@ -730,7 +729,6 @@ namespace Files {
 		{
 			void* oldData = m_bufferArray;
 			uint64_t minNum = min(m_numElements, _size);
-			uint64_t maxNum = max(m_numElements, _size);
 
 			// Determine target memory
 			if( newSize <= sizeof(m_buffer) ) m_bufferArray = m_buffer;
@@ -806,7 +804,7 @@ namespace Files {
 
 		m_lastAccessed = _index;
 		return *this;
-	};
+	}
 
 	// Casts the node data into string.
 	MetaFileWrapper::Node::operator std::string() const
@@ -834,16 +832,16 @@ namespace Files {
 		return _val;														\
 	}
 
-	ASSIGNEMENT_OP(float, ElementType::FLOAT, ElementType::FLOAT != m_type);
-	ASSIGNEMENT_OP(double, ElementType::DOUBLE, ElementType::DOUBLE != m_type);
-	ASSIGNEMENT_OP(int8_t, ElementType::INT8, ElementType::INT8 != m_type);
-	ASSIGNEMENT_OP(uint8_t, ElementType::UINT8, ElementType::UINT8 != m_type);
-	ASSIGNEMENT_OP(int16_t, ElementType::INT16, m_type != ElementType::INT16 && m_type != ElementType::INT8);
-	ASSIGNEMENT_OP(uint16_t, ElementType::UINT16, m_type != ElementType::UINT16 && m_type != ElementType::UINT8);
-	ASSIGNEMENT_OP(int32_t, ElementType::INT32, m_type > ElementType::INT32 || m_type < ElementType::INT8);
-	ASSIGNEMENT_OP(uint32_t, ElementType::UINT32, m_type > ElementType::UINT32 || m_type < ElementType::UINT8);
-	ASSIGNEMENT_OP(int64_t, ElementType::INT64, m_type > ElementType::INT64 || m_type < ElementType::INT8);
-	ASSIGNEMENT_OP(uint64_t, ElementType::UINT64, m_type > ElementType::UINT64 || m_type < ElementType::UINT8);
+	ASSIGNEMENT_OP(float, ElementType::FLOAT, ElementType::FLOAT != m_type)
+	ASSIGNEMENT_OP(double, ElementType::DOUBLE, ElementType::DOUBLE != m_type)
+	ASSIGNEMENT_OP(int8_t, ElementType::INT8, ElementType::INT8 != m_type)
+	ASSIGNEMENT_OP(uint8_t, ElementType::UINT8, ElementType::UINT8 != m_type)
+	ASSIGNEMENT_OP(int16_t, ElementType::INT16, m_type != ElementType::INT16 && m_type != ElementType::INT8)
+	ASSIGNEMENT_OP(uint16_t, ElementType::UINT16, m_type != ElementType::UINT16 && m_type != ElementType::UINT8)
+	ASSIGNEMENT_OP(int32_t, ElementType::INT32, m_type > ElementType::INT32 || m_type < ElementType::INT8)
+	ASSIGNEMENT_OP(uint32_t, ElementType::UINT32, m_type > ElementType::UINT32 || m_type < ElementType::UINT8)
+	ASSIGNEMENT_OP(int64_t, ElementType::INT64, m_type > ElementType::INT64 || m_type < ElementType::INT8)
+	ASSIGNEMENT_OP(uint64_t, ElementType::UINT64, m_type > ElementType::UINT64 || m_type < ElementType::UINT8)
 
 	bool MetaFileWrapper::Node::operator = (bool _val)
 	{
@@ -975,5 +973,5 @@ namespace Files {
 	}
 
 #undef ARRAY_SIZE
-};
-};
+} // namespace Files
+} // namespace Jo

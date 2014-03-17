@@ -146,6 +146,6 @@ namespace Files {
 
 		// Resources are release by the PNGW destructor (even on throw)
 	}
-};
-};
 
+} // namespace Files
+} // namespace Jo

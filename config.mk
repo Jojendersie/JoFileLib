@@ -1,8 +1,8 @@
 CXX 	 = g++
 
-CXXFLAGS =  -Wp,-MMD,$*.dep \
+CXXFLAGS =  -Wp,-MMD,$(BUILDDIR)$*.dep \
             -Wall -Wextra -pedantic \
-            -fPIC \
+            -fPIC -std=c++11\
             -g
 
 # MinGW
