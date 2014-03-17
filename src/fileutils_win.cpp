@@ -19,16 +19,13 @@ namespace Files {
 namespace Utils {
 
 	// ********************************************************************* //
-	// Reads all filenames form the given directory.
-	FileEnumerator::FileEnumerator( const std::string& _directory )
-	{
-		Reset( _directory );
-	}
-
-	// ********************************************************************* //
 	// Refreshes the lists of names.
 	void FileEnumerator::Reset( const std::string& _directory )
 	{
+		// Clear old
+		m_directories.clear();
+		m_files.clear();
+
 		HANDLE handle;
 		WIN32_FIND_DATA data;
  
@@ -37,9 +34,7 @@ namespace Utils {
 		handle = FindFirstFile(charBuf, &data);
 		do {
 			// Skip ".", ".." and empty names
-			if (!( (data.cFileName[0]=='.')
-					&& ( (data.cFileName[1]=='.' && data.cFileName[2]==0)
-					   || data.cFileName[1]==0 ) ))
+			if( (data.cFileName[0]>0) && !( (data.cFileName[0]=='.') && ( (data.cFileName[1]=='.' && data.cFileName[2]==0) || data.cFileName[1]==0 ) ))
 			if( data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
 			{
 				m_directories.push_back( data.cFileName );

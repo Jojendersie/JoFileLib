@@ -92,6 +92,17 @@ namespace Utils {
 
 		return buf0.st_dev == buf1.st_dev && buf0.st_ino == buf1.st_ino;
 	}
+
+
+
+
+
+	// ********************************************************************* //
+	// Reads all filenames form the given directory.
+	FileEnumerator::FileEnumerator( const std::string& _directory )
+	{
+		Reset( _directory );
+	}
 };
 };
 };
