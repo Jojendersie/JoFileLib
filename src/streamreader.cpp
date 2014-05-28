@@ -14,7 +14,7 @@ namespace Files {
 		{
 			uint8_t charBuffer;
 			do {
-		//		if(_file.IsEof()) throw 0;
+				if(_file.IsEof()) return 0;
 				charBuffer = _file.Next();
 			} while( std::isspace(charBuffer) );
 
@@ -283,11 +283,19 @@ namespace Files {
 			if( charBuffer == '-' ) {
 				// Get yet another digit to initialize number
 				charBuffer = _file.Next();
-				if( charBuffer <= '0' || charBuffer > '9' ) return 0;	// TODO: some loglevel
+				if( charBuffer <= '0' || charBuffer > '9' )
+				{
+					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+					return 0;	// TODO: some loglevel
+				}
 				sign = -1;
 				number = charBuffer - '0';		// number is now in [1,9]
 			} else {
-				if( charBuffer <= '0' || charBuffer > '9' ) return 0;	// TODO: some loglevel
+				if( charBuffer <= '0' || charBuffer > '9' )
+				{
+					_file.Seek( 1, IFile::SeekMode::MOVE_BACKWARD );
+					return 0;	// TODO: some loglevel
+				}
 				sign = 1;
 				number = charBuffer - '0';		// number is now in [1,9]
 			}

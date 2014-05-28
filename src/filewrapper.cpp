@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstring>	// memcpy
 #include <string>
+#include <algorithm>
 using namespace std; 
 
 namespace Jo {
@@ -639,7 +640,7 @@ namespace Files {
 		_file.Write( &code, 1 );
 
 		// IDENTIFIER
-		uint8_t length = m_name.length();
+		uint8_t length = uint8_t(m_name.length());
 		_file.Write( &length, 1 );
 		_file.Write( &m_name[0], length );
 

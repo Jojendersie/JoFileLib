@@ -28,8 +28,8 @@ namespace Utils {
 		/// \param [in] _directory Name of any directory to reload the list from.
 		void Reset( const std::string& _directory );
 
-		int GetNumFiles() const					{ return m_files.size(); }
-		int GetNumDirectories() const			{ return m_directories.size(); }
+		int GetNumFiles() const					{ return (int)m_files.size(); }
+		int GetNumDirectories() const			{ return (int)m_directories.size(); }
 
 		uint64_t GetFileSize( int _index ) const					{ return m_files[_index].size; }
 

@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <string>
+#include <cassert>
 
 namespace Jo {
 namespace Files {
@@ -58,7 +59,7 @@ namespace Files {
 		/// \return true if file can be read.
 		bool CanRead() const			{ return m_readAccess; }
 
-		bool IsEof() const	{ return m_size == m_cursor; }
+		bool IsEof() const				{ assert(m_size >= m_cursor); return m_size == m_cursor; }
 
 		/// \brief Write a single uint8_t to the file.
 		void WriteU8( uint8_t _what )		{ Write(&_what, 1); }

@@ -1,5 +1,6 @@
 #include "imagewrapper.hpp"
 #include "jofilelib.hpp"
+#include <algorithm>
 
 // TODO: padding (if bitdepth < 8)!
 
@@ -54,6 +55,10 @@ namespace Files {
 
 	void ImageWrapper::Set( int _x, int _y, int _c, float _value )
 	{
+		// Do nothing if out of boundaries
+		if( _x < 0 || _x >= (int)m_width || _y < 0 || _y >= (int)m_height || _c < 0 || _c >= (int)m_numChannels )
+			return;
+
 		switch(m_channelType)
 		{
 		case ChannelType::UINT: {
@@ -96,6 +101,10 @@ namespace Files {
 
 	float ImageWrapper::Get( int _x, int _y, int _c )
 	{
+		// Do nothing if out of boundaries
+		if( _x < 0 || _x >= (int)m_width || _y < 0 || _y >= (int)m_height || _c < 0 || _c >= (int)m_numChannels )
+			return -10000.0f;
+
 		switch(m_channelType)
 		{
 		case ChannelType::UINT: {

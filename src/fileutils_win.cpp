@@ -7,8 +7,6 @@
 //#include <fcntl.h>
 
 #ifdef JO_WINDOWS
-#undef WINAPI_FAMILY
-#define WINAPI_FAMILY WINAPI_FAMILY_DESKTOP_APP
 #include <windows.h>
 #include <direct.h>
 //#include <io.h>
@@ -22,7 +20,21 @@ namespace Utils {
 	// Create a directory. The name should not contain a file name.
 	void MakeDir( const std::string& _name )
 	{
-		_mkdir(_name.c_str());
+		// _mkDir cannot create a path - only single directories
+		std::string::const_iterator nextDir = _name.begin() + 1;
+		do {
+			nextDir = std::find(nextDir, _name.end(), '/');
+			std::string checkedPath(_name.begin(), nextDir);
+			if( !Exists(checkedPath) )
+			{
+				if( _mkdir(checkedPath.c_str()) == -1 )
+				{
+					if( errno == EEXIST ) throw std::string("Cannot create directory. There is already a file named '" + _name + '\'');
+					if( errno == ENOENT ) throw std::string("Cannot create directory. Path not found");
+				}
+			}
+			++nextDir;
+		} while(nextDir != _name.end());
 	}
 
 

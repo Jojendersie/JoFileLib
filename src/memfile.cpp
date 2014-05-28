@@ -1,6 +1,7 @@
 #include "memfile.hpp"
 #include <cstring>	// memcpy
 #include <string>
+#include <algorithm>
 
 namespace Jo {
 namespace Files {
