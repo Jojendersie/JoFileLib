@@ -21,7 +21,7 @@ namespace Files {
 			if( !Utils::Exists(_name) )
 			{
 				// Create missing directory
-				Utils::MakeDir(dir);
+				if( !dir.empty() ) Utils::MakeDir(dir);
 				// Retry: w+ might destroy content, but we are sure nothing
 				// like that exists!
 				m_file = fopen( _name.c_str(), "w+b" );
