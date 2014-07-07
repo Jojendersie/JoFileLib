@@ -15,7 +15,7 @@ namespace Files {
 		m_file = fopen( _name.c_str(), modeStr );
 
 		// In write mode it could be that the directory is missing
-		if(!m_file && (_flags & CREATE_FILE))
+		if(!m_file && (_flags & OVERWRITE))
 		{
 			// Search for the directory
 			std::string dir = Utils::GetDirectory(_name);
@@ -23,8 +23,7 @@ namespace Files {
 			{
 				// Create missing directory
 				if( !dir.empty() ) Utils::MakeDir(dir);
-				// Retry: w+ might destroy content, but we are sure nothing
-				// like that exists!
+				// Retry
 				m_file = fopen( _name.c_str(), "w+b" );
 			}
 		}
