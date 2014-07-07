@@ -82,9 +82,9 @@ int main()
 
 		Jo::Files::MemFile File;
 		Wrap1.Write( File, Jo::Files::Format::SRAW );
-		Jo::Files::HDDFile SaveTestJsonFile( "write_test.json", Jo::Files::HDDFile::CREATE_FILE );
+		Jo::Files::HDDFile SaveTestJsonFile( "write_test.json", Jo::Files::HDDFile::OVERWRITE );
 		Wrap1.Write( SaveTestJsonFile, Jo::Files::Format::JSON );
-		Jo::Files::HDDFile SaveTestSrawFile( "write_test.sraw", Jo::Files::HDDFile::CREATE_FILE );
+		Jo::Files::HDDFile SaveTestSrawFile( "write_test.sraw", Jo::Files::HDDFile::OVERWRITE );
 		Wrap1.Write( SaveTestSrawFile, Jo::Files::Format::SRAW );
 
 		// READ ************************************************
@@ -143,7 +143,7 @@ int main()
 
 void TestRndAccessHDDFile()
 {
-	Jo::Files::HDDFile file( "rndaccess.test", Jo::Files::HDDFile::CREATE_FILE );
+	Jo::Files::HDDFile file( "rndaccess.test", Jo::Files::HDDFile::OVERWRITE );
 
 	// Sequential write
 	for( int i=0; i<10; ++i )

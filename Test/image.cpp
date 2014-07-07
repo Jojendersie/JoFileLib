@@ -37,8 +37,12 @@ void TestPngLoad()
 				normalPng.Set(x,y,3, 1.0f);
 			}
 
-		Jo::Files::HDDFile file3("out.png", Jo::Files::HDDFile::CREATE_FILE);
+		Jo::Files::HDDFile file3("out.png", Jo::Files::HDDFile::OVERWRITE);
 		normalPng.Write( file3, Jo::Files::Format::PNG );
+
+		std::cout << "\n******* tga loader test *******\n";
+		Jo::Files::ImageWrapper rleTga( Jo::Files::HDDFile("rle.tga"), Jo::Files::Format::TGA );
+		rleTga.Write( Jo::Files::HDDFile("out.tga", Jo::Files::HDDFile::OVERWRITE), Jo::Files::Format::TGA );
 
 		int breakpoint;
 	} catch( std::string e )

@@ -15,6 +15,7 @@ namespace Files {
 		{
 		case Format::PNG: ReadPNG( _file ); break;
 		case Format::PFM: ReadPFM( _file ); break;
+		case Format::TGA: ReadTGA( _file ); break;
 		default:
 			assert(false);
 			throw std::string("[ImageWrapper::ImageWrapper] Cannot open non-image format.");
@@ -47,6 +48,7 @@ namespace Files {
 		{
 		case Format::PNG: WritePNG( _file ); break;
 		case Format::PFM: WritePFM( _file ); break;
+		case Format::TGA: WriteTGA( _file ); break;
 		default:
 			assert(false);
 			throw std::string("[ImageWrapper::Write] Target format not supported.");
@@ -99,7 +101,7 @@ namespace Files {
 	}
 
 
-	float ImageWrapper::Get( int _x, int _y, int _c )
+	float ImageWrapper::Get( int _x, int _y, int _c ) const
 	{
 		// Do nothing if out of boundaries
 		if( _x < 0 || _x >= (int)m_width || _y < 0 || _y >= (int)m_height || _c < 0 || _c >= (int)m_numChannels )

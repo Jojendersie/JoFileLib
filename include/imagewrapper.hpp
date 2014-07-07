@@ -11,6 +11,9 @@ namespace Files {
 	/**************************************************************************//**
 	 * \class	Jo::Files::ImageWrapper
 	 * \brief	Loads images of various types and provides an unified access.
+	 *
+	 *			The pixel coordinates are mathematically: (0,0) is the lower left
+	 *			corner???? TODO: really (true for tga, the others ?)
 	 * \details	In general color palettes are not supported!
 	 *****************************************************************************/
 	class ImageWrapper
@@ -77,7 +80,7 @@ namespace Files {
 		///		If x, y, or c is out of bounds the return value is -10000.0f.
 		/// \return Value in [0,1] if unsigned channels, [-1,1] for signed int
 		///		or unconverted float value.
-		float Get( int _x, int _y, int _c );
+		float Get( int _x, int _y, int _c ) const;
 
 		/// \brief Write image to a file of arbitrary type.
 		/// \details This method fails if the target format does not support
@@ -100,6 +103,11 @@ namespace Files {
 		void ReadPFM( const IFile& _file );
 		/// \brief Write a portable float map
 		void WritePFM( IFile& _file ) const;
+
+		/// \brief Read in a targa
+		void ReadTGA( const IFile& _file );
+		/// \brief Write a targa
+		void WriteTGA( IFile& _file ) const;
 	};
 
 } // namespace Files

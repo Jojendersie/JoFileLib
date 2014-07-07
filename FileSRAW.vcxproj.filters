@@ -224,5 +224,8 @@
     <ClCompile Include="src\fileutils_unix.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\imagewrapper_tga.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

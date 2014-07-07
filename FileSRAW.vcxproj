@@ -163,6 +163,7 @@
     <ClCompile Include="src\imagewrapper.cpp" />
     <ClCompile Include="src\imagewrapper_pfm.cpp" />
     <ClCompile Include="src\imagewrapper_png.cpp" />
+    <ClCompile Include="src\imagewrapper_tga.cpp" />
     <ClCompile Include="src\memfile.cpp" />
     <ClCompile Include="src\streamreader.cpp" />
   </ItemGroup>
