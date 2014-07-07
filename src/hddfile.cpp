@@ -7,7 +7,8 @@ namespace Jo {
 namespace Files {
 
 	HDDFile::HDDFile( const std::string& _name, ModeFlags _flags, int _bufferSize ) :
-		IFile(0, true, true), m_pendingWriteBytes(0)
+		IFile(0, true, true), m_pendingWriteBytes(0),
+		m_name(_name)
 	{
 		const char* modeStr = (_flags & OVERWRITE) ? "w+b" : "r+b";
 
@@ -52,7 +53,8 @@ namespace Files {
 	HDDFile::HDDFile(HDDFile&& _file) :
 		IFile(_file),
 		m_pendingWriteBytes(_file.m_pendingWriteBytes),
-		m_file(_file.m_file)
+		m_file(_file.m_file),
+		m_name(_file.m_name)
 	{
 		_file.m_file = nullptr;
 	}

@@ -1,7 +1,7 @@
 #include <cstdint>
 #include "imagewrapper.hpp"
 #include "jofilelib.hpp"
-#include "plattform.hpp"
+#include "platform.hpp"
 
 namespace Jo {
 namespace Files {

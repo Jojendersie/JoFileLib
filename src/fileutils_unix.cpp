@@ -1,4 +1,4 @@
-#include "plattform.hpp"
+#include "platform.hpp"
 #include "fileutils.hpp"
 #include <algorithm>
 

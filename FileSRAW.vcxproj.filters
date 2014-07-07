@@ -33,9 +33,6 @@
     <ClInclude Include="include\memfile.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\plattform.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\fileutils.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -100,6 +97,9 @@
       <Filter>libpng</Filter>
     </ClInclude>
     <ClInclude Include="include\streamreader.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\platform.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

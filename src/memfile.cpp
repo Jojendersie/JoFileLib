@@ -2,6 +2,7 @@
 #include <cstring>	// memcpy
 #include <string>
 #include <algorithm>
+#include <sstream>
 
 namespace Jo {
 namespace Files {
@@ -113,6 +114,14 @@ namespace Files {
 			m_cursor = _numBytes;
 			break;
 		}
+	}
+
+	std::string MemFile::Name() const
+	{
+		// Convert address to hexadecimal output
+		std::ostringstream stream;
+		stream << (void*)m_buffer;
+		return stream.str();
 	}
 
 } // namespace Files

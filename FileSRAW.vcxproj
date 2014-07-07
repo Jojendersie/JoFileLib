@@ -121,7 +121,7 @@
     <ClInclude Include="include\imagewrapper.hpp" />
     <ClInclude Include="include\jofilelib.hpp" />
     <ClInclude Include="include\memfile.hpp" />
-    <ClInclude Include="include\plattform.hpp" />
+    <ClInclude Include="include\platform.hpp" />
     <ClInclude Include="include\streamreader.hpp" />
   </ItemGroup>
   <ItemGroup>
