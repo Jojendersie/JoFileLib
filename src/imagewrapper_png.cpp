@@ -7,6 +7,15 @@
 namespace Jo {
 namespace Files {
 
+	bool ImageWrapper::IsPNG( const IFile& _file )
+	{
+		// Read first 8 bytes and check if it is really png
+		uint8_t test[8];
+		_file.Read( 8, test );
+		_file.Seek( 0 );
+		return !png_sig_cmp(test, 0, 8);
+	}
+
 	static void ReadCallback(png_structp _png, png_bytep _data, png_size_t _length)
 	{
 		IFile* file = (IFile*)png_get_io_ptr(_png);
@@ -49,7 +58,7 @@ namespace Files {
 		// Set new callbacks for I/O
 		png_set_read_fn( png.handle, (png_voidp)&_file, ReadCallback );
 
-		// Read first 8 bytes and check if it is realy png
+		// Read first 8 bytes and check if it is really png
 		uint8_t test[8];
 		_file.Read( 8, test );
 		if(png_sig_cmp(test, 0, 8)) throw std::string("[ImageWrapper::ReadPNG] File does not contain a valid png file.");

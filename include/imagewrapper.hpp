@@ -28,7 +28,7 @@ namespace Files {
 		/// \brief Use a wrapped file to read from.
 		/// \details This is only to read images call write to save an image.
 		/// \param _format [in] How should the input be interpreted.
-		ImageWrapper( const IFile& _file, Format _format );
+		ImageWrapper( const IFile& _file, Format _format = Format(0) );
 
 		/// \brief Create an empty image. The pixels are uninitialized and have
 		///		an unknown value.
@@ -96,14 +96,17 @@ namespace Files {
 		ChannelType m_channelType;
 		//int m_pixelSize;		///< Size of a pixel in bytes (= m_numChannels * m_bitDepth / 8)
 
+		bool IsPNG( const IFile& _file );
 		void ReadPNG( const IFile& _file );
 		void WritePNG( IFile& _file ) const;
 
+		bool IsPFM( const IFile& _file );
 		/// \brief Read in a portable float map
 		void ReadPFM( const IFile& _file );
 		/// \brief Write a portable float map
 		void WritePFM( IFile& _file ) const;
 
+		bool IsTGA( const IFile& _file );
 		/// \brief Read in a targa
 		void ReadTGA( const IFile& _file );
 		/// \brief Write a targa

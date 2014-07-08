@@ -6,6 +6,15 @@
 namespace Jo {
 namespace Files {
 
+	bool ImageWrapper::IsPFM( const IFile& _file )
+	{
+		char format[2];
+		_file.Read( 2, format );
+		_file.Seek( 0 );
+		// First line is 'Pf' or 'PF'
+		return format[0] == 'P' && (format[1] == 'f' || format[1] == 'F');
+	}
+
 	void ImageWrapper::ReadPFM( const IFile& _file )
 	{
 		char format[2];

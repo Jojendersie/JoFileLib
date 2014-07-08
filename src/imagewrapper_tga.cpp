@@ -6,7 +6,7 @@
 
 namespace Jo {
 namespace Files {
-
+	
 #pragma pack( push, 1 )
 	struct Header {
 		uint8_t idLength;			///< Length of vendor specific id field
@@ -29,6 +29,23 @@ namespace Files {
 	};
 #pragma pack( pop )
 
+
+	// ********************************************************************* //
+	bool ImageWrapper::IsTGA( const IFile& _file )
+	{
+		Header header;
+		_file.Read( sizeof(Header), &header );
+		_file.Seek( 0 );
+		// There is no check-field in the tga header just test reasonable things
+		return (header.imageType <= 3 || (header.imageType >= 9 && header.imageType <= 11))
+			&& (header.colorMapType <= 1)
+			&& ((header.colorMap.depth == 0) || (header.colorMap.depth == 15) || (header.colorMap.depth == 16) || (header.colorMap.depth == 24) || (header.colorMap.depth == 32))
+			&& (header.colorMap.offset <= 273)
+			&& ((header.image.pixelDepth == 1) || (header.image.pixelDepth == 8) || (header.image.pixelDepth == 15) || (header.image.pixelDepth == 16) || (header.image.pixelDepth == 24) || (header.image.pixelDepth == 32));
+	}
+
+
+	// ********************************************************************* //
 	static void SetColor( uint8_t* _color, int _colorDepth, ImageWrapper& img, int _x, int _y )
 	{
 		if( _colorDepth <= 16 )

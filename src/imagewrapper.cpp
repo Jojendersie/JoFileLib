@@ -10,6 +10,15 @@ namespace Files {
 	ImageWrapper::ImageWrapper( const IFile& _file, Format _format ) :
 		m_buffer(nullptr)
 	{
+		// Since a file must not be from disc the ending can only be found
+		// by try and error
+		if( _format == Format::AUTO_DETECT )
+		{
+			if( IsPNG(_file) ) _format = Format::PNG;
+			if( IsPFM(_file) ) _format = Format::PFM;
+			if( IsTGA(_file) ) _format = Format::TGA;
+		}
+
 		// Choose correct load method
 		switch(_format)
 		{
